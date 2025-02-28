@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway  # Tên service
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Cho phép tự động tìm service từ Eureka
+      routes:
+        - id: auth-service
+          uri: lb://auth-service  # Load Balancing thông qua Eureka
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-service
+          uri: lb://user-service  # Load Balancing thông qua Eureka
+          predicates:
+            - Path=/api/users/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/  # Địa chỉ của Eureka Server
+  instance:
+    prefer-ip-address: true
