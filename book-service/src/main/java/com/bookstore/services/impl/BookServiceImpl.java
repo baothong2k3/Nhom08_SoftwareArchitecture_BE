@@ -4,12 +4,12 @@ import com.bookstore.entities.Book;
 import com.bookstore.repositories.BookRepository;
 import com.bookstore.services.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-@RestController
-@RequestMapping("/api/books")
+@Service
 public class BookServiceImpl implements BookService {
     @Autowired
     private BookRepository bookRepository;
