@@ -1,4 +1,9 @@
 package com.bookstore.repositories;
 
-public class CartRepository {
+import com.bookstore.entities.Cart;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CartRepository extends JpaRepository<Cart, Long> {
 }
