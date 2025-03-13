@@ -1,17 +1,19 @@
 package bookstore.userservice.dtos;
 
-import bookstore.userservice.entities.User;
-import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
 
-@Data
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class AddressDTO {
 
-    private Long id;
-
+    @NotBlank(message = "Address is required")
     private String address;
 
-    private User user;
+    private UserDTO user;
 }

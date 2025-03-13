@@ -3,6 +3,7 @@ package bookstore.userservice.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,6 +24,15 @@ public class OpenAPIConfiguration {
 		
 		return new OpenAPI().info(information).servers(List.of(server));
 	}
+
+	@Bean
+	public GroupedOpenApi groupedOpenApi() {
+		return GroupedOpenApi.builder()
+				.group("api_user")
+				.pathsToMatch("bookstore.userservice.controllers")
+				.build();
+	}
 }
 
-//http://localhost:8080/swagger-ui/index.html
+//http://localhost:8001/swagger-ui/index.html
+//http://localhost:8001/v3/api-docs
