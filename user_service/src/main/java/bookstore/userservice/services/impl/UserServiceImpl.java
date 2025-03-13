@@ -49,19 +49,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO findById(long id) {
+    public UserDTO findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new ItemNotFoundException("Can not find user with id: " + id));
         return this.convertToDTO(user);
     }
 
-
+    /**
+     * Find all users
+     * @return
+     */
     @Transactional
     @Override
     public List<UserDTO> findAll() {
         return userRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+
+    /**
+     *  Save user
+     * @param userDTO
+     * @return
+     */
     @Transactional
     @Modifying
     @Override

@@ -14,23 +14,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // Xử lý lỗi validation (Form không hợp lệ)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<List<String>>> handleValidationException(MethodArgumentNotValidException ex) {
-        List<String> errors = ex.getBindingResult().getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.badRequest().body(
-                ApiResponse.<List<String>>builder()
-                        .status("FAILED")
-                        .message("Validation Failed: Please provide valid data.")
-                        .response(errors)
-                        .build()
-        );
-    }
-
     // Xử lý lỗi tài khoản đã tồn tại
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<String>> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {

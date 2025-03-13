@@ -4,13 +4,12 @@ package bookstore.userservice.controllers;
 import bookstore.userservice.dtos.AddressDTO;
 import bookstore.userservice.dtos.ApiResponse;
 import bookstore.userservice.dtos.UserDTO;
-import bookstore.userservice.entities.Address;
-import bookstore.userservice.entities.User;
 import bookstore.userservice.services.AddressService;
 import bookstore.userservice.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -20,9 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-@RepositoryRestController
-@RequestMapping("/api/users")
+@RestController
+@RequestMapping("/api/user")
+@Tag(name = "User API", description = "Perform CRUD operations on users")
 public class UserController {
 
     private final UserService userService;
@@ -35,6 +34,7 @@ public class UserController {
     }
 
 
+    @Operation(summary = "Save user", description = "Save a new user")
     @PostMapping("/save")
     public ResponseEntity<ApiResponse<?>> registerUser(@Valid @RequestBody UserDTO userDTO, BindingResult result) {
         if (userService.existsByUserName(userDTO.getUserName())) {
@@ -65,22 +65,23 @@ public class UserController {
         UserDTO user = UserDTO.builder()
                 .email(userDTO.getEmail())
                 .userName(userDTO.getUserName())
-                .password(userDTO.getPassword())
                 .enabled(userDTO.isEnabled())
-                .role(userDTO.getRole())
                 .phoneNumber(userDTO.getPhoneNumber())
                 .dob(userDTO.getDob())
-                .addresses(userDTO.getAddresses())
                 .build();
 
-        Address address = Address.builder()
-                        .address(userDTO.getAddresses().get(0).getAddress())
+        UserDTO uDTO  =  userService.save(user);
+
+
+        if (userDTO.getAddresses() != null && !userDTO.getAddresses().isEmpty()) {
+            for (var addressDTO : userDTO.getAddresses()) {
+                AddressDTO add = AddressDTO.builder()
+                        .address(addressDTO.getAddress())
+                        .user(uDTO)
                         .build();
-
-
-        addressService.save(address);
-        userService.save(user);
-
+                addressService.save(add);
+            }
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder()
@@ -89,4 +90,29 @@ public class UserController {
                         .build());
     }
 
+
+    @GetMapping("/{id}")
+    @Operation(summary = "getUserById", description = "Get user by id")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+        UserDTO userDTO = userService.findById(id);
+        ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                .status("SUCCESS")
+                .message("User fetched successfully")
+                .response(userDTO)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/all")
+    @Operation(summary = "getAllUsers", description = "Get all users")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        List<UserDTO> users = userService.findAll();
+        ApiResponse<List<UserDTO>> response = ApiResponse.<List<UserDTO>>builder()
+                .status("SUCCESS")
+                .message("Get user list successfully")
+                .response(users)
+                .build();
+        return ResponseEntity.ok(response);
+    }
 }

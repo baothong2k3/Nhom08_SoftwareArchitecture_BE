@@ -11,7 +11,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 
 @SpringBootApplication
-@EnableJpaAuditing
 @EnableDiscoveryClient
 public class UserServiceApplication {
     private final static Logger logger = LoggerFactory.getLogger(UserServiceApplication.class.getName());

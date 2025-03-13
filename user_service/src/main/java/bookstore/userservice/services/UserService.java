@@ -11,7 +11,7 @@ public interface UserService {
 
     public boolean existsByUserName(String userName);
 
-    public UserDTO findById(long id);
+    public UserDTO findById(Long id);
 
     public List<UserDTO> findAll();
 

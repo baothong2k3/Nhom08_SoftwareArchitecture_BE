@@ -6,13 +6,15 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.Period;
 import java.util.List;
 
-@Data
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
+@Setter
 public class UserDTO {
     private Long id;
     @NotBlank(message = "Username is required!")
@@ -25,21 +27,26 @@ public class UserDTO {
     private String email;
     private boolean enabled;
 
-    @NotBlank(message = "Password is required!")
-    private String password;
 
-    private Long role;
-
-    @Pattern(regexp = "\\(\\d{3}\\)\\d{3}-\\d{4}",
-            message = "Please input phone number with format: (NNN)NNN-NNNN")
+    @Pattern(regexp = "^(0|\\+84)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$",
+            message = "Please input a valid Vietnamese phone number!")
     private String phoneNumber;
+
 
     @Past(message = "Date of birth must be less than today")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
     private List<AddressDTO> addresses;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+    @AssertTrue(message = "User must be at least 13 years old")
+    public boolean isOlderThan13() {
+        if (dob == null) {
+            return true; // Bỏ qua nếu dob null (để kiểm tra @Past trước)
+        }
+        return Period.between(dob, LocalDate.now()).getYears() >= 13;
+    }
 }
