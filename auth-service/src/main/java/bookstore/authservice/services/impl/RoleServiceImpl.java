@@ -20,7 +20,7 @@ public class RoleServiceImpl implements RoleService {
         this.roleRepository = roleRepository;
     }
 
-    @Transactional  //đảm bảo tính toàn vẹn dữ liệu
+    @Transactional
     @Modifying //đánh dấu phương thức này sẽ thay đổi dữ liệu trong cơ sở dữ liệu
     @Override
     public void saveRole(Role role) {
@@ -32,8 +32,5 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.findAll();
     }
 
-    @Override
-    public Role getRoleByCode(String roleCode) {
-        return roleRepository.findByCode(roleCode);
-    }
+
 }

@@ -1,6 +1,7 @@
 package bookstore.userservice.dtos;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
@@ -15,5 +16,6 @@ public class AddressDTO {
     @NotBlank(message = "Address is required")
     private String address;
 
+    @JsonIgnore
     private UserDTO user;
 }

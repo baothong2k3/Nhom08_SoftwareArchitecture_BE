@@ -13,7 +13,7 @@ import java.util.*;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "addresses")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
