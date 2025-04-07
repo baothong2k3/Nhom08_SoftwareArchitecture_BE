@@ -1,6 +1,7 @@
 package bookstore.userservice.services.impl;
 
 import bookstore.userservice.dtos.UserDTO;
+import bookstore.userservice.dtos.UserRequest;
 import bookstore.userservice.exceptions.ItemNotFoundException;
 import bookstore.userservice.repositories.UserRepository;
 import bookstore.userservice.entities.User;
@@ -26,15 +27,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     ModelMapper modelMapper;
 
-    private UserDTO convertToDTO(User user) {
-        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-        return userDTO;
-    }
-
-    private User convertToEntity(UserDTO userDTO) {
-        User user = modelMapper.map(userDTO, User.class);
-        return user;
-    }
 
 
 
@@ -43,16 +35,14 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByEmail(email);
     }
 
-    @Override
-    public boolean existsByUserName(String username) {
-        return userRepository.existsByUserName(username);
-    }
+
 
     @Override
     public UserDTO findById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(()-> new ItemNotFoundException("Can not find user with id: " + id));
-        return this.convertToDTO(user);
+//        User user = userRepository.findById(id)
+//                .orElseThrow(()-> new ItemNotFoundException("Can not find user with id: " + id));
+//        return this.convertToDTO(user);
+        return null;
     }
 
     /**
@@ -62,22 +52,35 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public List<UserDTO> findAll() {
-        return userRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+//        return userRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+        return null;
     }
 
 
     /**
-     *  Save user
-     * @param userDTO
+     * Save user
+     * @param userRequest
      * @return
      */
     @Transactional
     @Modifying
     @Override
-    public UserDTO save(UserDTO userDTO) {
-        User user = this.convertToEntity(userDTO);
-        user = userRepository.save(user);
-        return this.convertToDTO(user);
+    public UserRequest save(UserRequest userRequest) {
+        User user = new User();
+        user.setPhoneNumber(userRequest.getPhoneNumber());
+        user.setEnabled(true);
+
+        User savedUser =  userRepository.save(user);
+
+        UserRequest response = new UserRequest();
+        response.setPhoneNumber(savedUser.getPhoneNumber());
+        response.setEnabled(savedUser.isEnabled());
+        return response;
+    }
+
+    @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        return userRepository.existsByPhoneNumber(phoneNumber);
     }
 
 }

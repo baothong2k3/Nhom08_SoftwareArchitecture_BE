@@ -5,8 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+
 
 
 @NoArgsConstructor
@@ -22,20 +21,14 @@ public class Account{
     @Column(name = "account_id")
     private Long id;
 
-    @Column(name = "user_name", nullable = false, unique = true)
-    private String userName;
-
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", unique = true)
     private String email;
 
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    @Column(name = "phone_number", nullable = false, unique = true)
+    private String phoneNumber;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
@@ -47,13 +40,6 @@ public class Account{
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "account_roles",
-            joinColumns = @JoinColumn(name = "account_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
-
-
+    @Column(name = "role", nullable = false)
+    private String role;
 }

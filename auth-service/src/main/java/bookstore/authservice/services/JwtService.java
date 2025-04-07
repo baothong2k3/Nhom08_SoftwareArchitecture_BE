@@ -8,7 +8,7 @@ import java.util.function.Function;
 public interface JwtService {
 
     // Tạo token từ thông tin đăng nhập
-    public String generateToken(String tenDangNhap,String role);
+    public String generateToken(UserDetails userDetails);
 
     // Trích xuất thông tin từ JWT(token)
     public <T> T extractClaim(String token, Function<Claims, T> claimsTFunction);

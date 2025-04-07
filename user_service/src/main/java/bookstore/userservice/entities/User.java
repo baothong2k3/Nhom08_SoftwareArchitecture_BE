@@ -19,16 +19,17 @@ import java.util.*;
 @Builder
 @Entity
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "user_name"),
-        @UniqueConstraint(columnNames = "email"),
         @UniqueConstraint(columnNames = "phone_number")
 })
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "user_name")
-    private String userName;
+
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "email", unique = true)
     private String email;
     private boolean enabled;
 
@@ -43,8 +44,9 @@ public class User {
     private LocalDateTime updatedAt;
 
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
+
     private LocalDate dob;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,17 +1,20 @@
 package bookstore.authservice.services;
 
 
-import bookstore.authservice.dtos.ApiResponse;
+import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.dtos.SignUpRequest;
+import bookstore.authservice.entities.Account;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.util.Optional;
+
 public interface AccountService extends UserDetailsService {
     //Đăng ký
-    ResponseEntity<ApiResponse<?>> signUp(SignUpRequest signUpRequest);
+    ResponseEntity<?> signUp(SignUpRequest signUpRequest);
 
     //Đăng nhập
-//    ResponseEntity<ApiResponse<?>> signIn(SignInRequest signInRequest);
+    ResponseEntity<?> signIn(SignInRequest signInRequest);
 
-//    public ResponseEntity<?> signIn(SignInRequest account, AuthenticationManager authenticationManager)
+    public boolean existsByPhoneNumber(String phoneNumber);
 }

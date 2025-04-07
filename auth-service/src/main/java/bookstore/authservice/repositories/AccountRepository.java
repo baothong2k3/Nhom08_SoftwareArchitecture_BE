@@ -4,10 +4,16 @@ import bookstore.authservice.entities.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
+import java.util.Optional;
+
 @RepositoryRestResource(collectionResourceRel = "account", path = "account")
 public interface AccountRepository extends JpaRepository<Account, Long> {
-    public boolean existsAccountByUserName(String username);
-    public boolean existsAccountByEmail(String email);
-    public Account findAccountByUserName(String username);
-    public Account findAccountByEmail(String email);
+    //Tìm tài khoản theo tên đăng nhập
+    Optional<Account> findByEmail(String email);
+
+    //Tìm tài khoản theo tên đăng nhập
+    Optional<Account> findByPhoneNumber(String phoneNumber);
+
+    boolean existsByPhoneNumber(String phoneNumber);
+
 }
