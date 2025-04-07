@@ -1,12 +1,13 @@
 server:
   port: 8080
-app:
-  api-prefix: /api/v1
 
 spring:
   application:
     name: api-gateway
-
+  data:
+    redis:
+      port: 6379
+      host: localhost
   logging:
     level:
       org.springframework.security: DEBUG
@@ -16,49 +17,40 @@ spring:
       name: logs/myapplication.log
     config: classpath:logback-spring.xml
 
-  doc:
-    api-docs:
-      enabled: true
-    swagger-ui:
-      enabled: true
-      operationsSorter: method
-    pathsToMatch: /api/user/**
-
   cloud:
     gateway:
       default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 10  # Replenish rate for tokens
-            redis-rate-limiter.burstCapacity: 20   # Max number of tokens allowed in a burst
-            redis-rate-limiter.requestedTokens: 1 # Number of tokens required for a request
+      # Tạm thời tắt RequestRateLimiter
+      # - name: RequestRateLimiter
+      #   args:
+      #     redis-rate-limiter.replenishRate: 10
+      #     redis-rate-limiter.burstCapacity: 20
+      #     redis-rate-limiter.requestedTokens: 1
       discovery:
         locator:
           enabled: true
       routes:
-        - id: identity-service
-          uri: lb://identity-service
+        - id: auth-service
+          uri: lb://auth-service
           predicates:
-            - Path=/auth/**
-        - id: product-service
-          uri: lb://product-service
+            - Path=/api/auth/**
+        - id: user-service
+          uri: lb://user-service
           predicates:
-            - Path=/products/**
-          filters:
-            - AddRequestHeader=Authorization, Bearer ${request.headers.Authorization}
-            - StripPrefix=2  # Strip '/api/v1' from the URL path before forwarding
+            - Path=/api/user/**
         - id: order-service
           uri: lb://order-service
           predicates:
             - Path=/orders/**
           filters:
-            - StripPrefix=2
+            - AddRequestHeader=Authorization, Bearer ${request.headers.Authorization}
+            - StripPrefix=1
         - id: customer-service
           uri: lb://customer-service
           predicates:
             - Path=/customers/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=1
 
 eureka:
   instance:

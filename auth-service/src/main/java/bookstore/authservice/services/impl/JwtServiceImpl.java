@@ -22,41 +22,48 @@ public class JwtServiceImpl implements JwtService {
 
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
-    // Tạo khóa bí mật
-    private Key getSigneKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET); // Chuyển chuỗi secret thành mảng byte
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
 
     @Override
-    public String generateToken(String tenDangNhap, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", tenDangNhap);
-        claims.put("role", role);
-
+    public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
-                .setClaims(claims) // Đính kèm các thông tin thêm (role, isAdmin, ...)
-                .setSubject(tenDangNhap) // Ghi tên đăng nhập vào token
-                .setIssuedAt(new Date(System.currentTimeMillis())) // Thời gian phát hành token
+                .setSubject(userDetails.getUsername())
+                .claim("role", userDetails.getAuthorities())
+                .setIssuedAt(new Date()) // Thời gian phát hành token
                 .setExpiration(new Date(System.currentTimeMillis() + 30 * 60 * 1000)) // Hết hạn sau 30 phút
-                .signWith(SignatureAlgorithm.HS256, getSigneKey()) // Ký token với khóa bí mật
+                .signWith(SignatureAlgorithm.HS256, SECRET) // Ký token với khóa bí mật
                 .compact(); // Tạo chuỗi token hoàn chỉnh
     }
 
 
-    // Trích xuất thời gian hết hạn từ token
+    /**
+     * Trích xuất thời gian hết hạn từ token
+     * @param token
+     * @return
+     */
     @Override
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Trích xuất tên người dùng từ token
+
+    /**
+     * Trích xuất Subject từ token
+     * @param token
+     * @return
+     */
     @Override
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
 
+    /**
+     * Phương thức generic để trích xuất bất kỳ thông tin nào từ token dựa trên một hàm resolver.
+     * @param token
+     * @param claimsResolver
+     * @return
+     * @param <T>
+     */
     @Override
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);  // Mở hộp token ra
@@ -64,22 +71,36 @@ public class JwtServiceImpl implements JwtService {
     }
 
 
+    /**
+     * Giải mã token để lấy toàn bộ claims (thông tin bên trong token).
+     * @param token
+     * @return
+     */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigneKey())  // Xác thực bằng secret key
+                .setSigningKey(SECRET)  // Xác thực bằng secret key
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    // Kiểm tra token có hết hạn hay không
+    /**
+     * Kiểm tra xem token đã hết hạn hay chưa
+     * @param token
+     * @return
+     */
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // Kiểm tra token có hợp lệ hay không
+    /**
+     * Kiểm tra tính hợp lệ của token
+     * @param token
+     * @param userDetails
+     * @return
+     */
     @Override
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String tenDangNhap = extractUsername(token);  // Lấy tên người dùng từ token
+        final String tenDangNhap = extractUsername(token);
         return (tenDangNhap.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }

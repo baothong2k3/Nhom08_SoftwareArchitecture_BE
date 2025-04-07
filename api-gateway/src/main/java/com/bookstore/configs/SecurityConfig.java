@@ -12,15 +12,22 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
+    private final JWTGlobalFilter jwtGlobalFilter;
+
+    // Inject filter qua constructor
+    public SecurityConfig(JWTGlobalFilter jwtGlobalFilter) {
+        this.jwtGlobalFilter = jwtGlobalFilter;
+    }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
         http.csrf(csrfSpec -> csrfSpec.disable())
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
+                        .pathMatchers("/api/auth/sign-up", "/api/auth/login").permitAll()
                         .pathMatchers("/products/**", "/orders/**", "/customers/**").authenticated()
                         .anyExchange().permitAll()
                 )
-                .addFilterBefore(new JWTGlobalFilter(), SecurityWebFiltersOrder.AUTHENTICATION);
+                .addFilterBefore(jwtGlobalFilter, SecurityWebFiltersOrder.AUTHENTICATION);
         return http.build();
     }
 }

@@ -1,6 +1,5 @@
 package bookstore.authservice.exceptions;
 
-import bookstore.authservice.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,34 +11,34 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException exception) {
-
-        List<String> errorMessage = new ArrayList<>();
-
-        exception.getBindingResult().getFieldErrors().forEach(error -> {
-            errorMessage.add(error.getDefaultMessage());
-        });
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .status("FAILED")
-                                .message("Registration Failed: Please provide valid data.")
-                                .response(errorMessage)
-                                .build()
-                );
-    }
-
-    @ExceptionHandler(value = UserAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<?>> userAlreadyExistsExceptionHandler(UserAlreadyExistsException exception) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(
-                        ApiResponse.builder()
-                                .status("FAILED")
-                                .message(exception.getMessage())
-                                .build()
-                );
-    }
+//    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+//    public ResponseEntity<?> methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException exception) {
+//
+//        List<String> errorMessage = new ArrayList<>();
+//
+//        exception.getBindingResult().getFieldErrors().forEach(error -> {
+//            errorMessage.add(error.getDefaultMessage());
+//        });
+//        return ResponseEntity
+//                .status(HttpStatus.BAD_REQUEST)
+//                .body(
+//                        ApiResponse.builder()
+//                                .status("FAILED")
+//                                .message("Validation error")
+//                                .errors(errorMessage)
+//                                .build()
+//                );
+//    }
+//
+//    @ExceptionHandler(value = UserAlreadyExistsException.class)
+//    public ResponseEntity<?> userAlreadyExistsExceptionHandler(UserAlreadyExistsException exception) {
+//        return ResponseEntity
+//                .status(HttpStatus.CONFLICT)
+//                .body(
+//                        ApiResponse.builder()
+//                                .status("FAILED")
+//                                .message(exception.getMessage())
+//                                .build()
+//                );
+//    }
 }

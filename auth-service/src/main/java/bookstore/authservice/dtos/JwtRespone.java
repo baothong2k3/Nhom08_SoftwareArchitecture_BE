@@ -1,4 +1,4 @@
 package bookstore.authservice.dtos;
 
-public class AccountResponseDTO {
+public class JwtRespone {
 }

@@ -17,10 +17,10 @@ import java.util.List;
 @Setter
 public class UserDTO {
     private Long id;
-    @NotBlank(message = "Username is required!")
+    @NotBlank(message = "Full name is required!")
     @Size(min= 5, message = "Username must have at least 5 characters!")
     @Size(max= 20, message = "Username can have have at most 20 characters!")
-    private String userName;
+    private String fullName;
 
     @Email(message = "Email is not in valid format!")
     @NotBlank(message = "Email is required!")

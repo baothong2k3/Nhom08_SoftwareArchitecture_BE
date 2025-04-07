@@ -102,11 +102,13 @@ public class JWTGlobalFilter implements WebFilter {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        //Bỏ qua các yêu cầu đến đường dẫn /auth/login và /auth/register
-        if (exchange.getRequest().getURI().toString().contains("/auth/login") ||
-                exchange.getRequest().getURI().toString().contains("/auth/register")) {
+        String path = exchange.getRequest().getURI().getPath();
 
-            return chain.filter(exchange);  //chuyển tiếp yêu cầu
+        // Bỏ qua các yêu cầu đến các đường dẫn không cần xác thực
+        if (
+                path.contains("/api/auth/sign-up") ||
+                path.contains("/api/user/save")) {
+            return chain.filter(exchange);
         }
 
         //Lấy token từ yêu cầu và giải mã claims
