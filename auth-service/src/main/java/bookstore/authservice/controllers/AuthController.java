@@ -1,5 +1,6 @@
 package bookstore.authservice.controllers;
 
+import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.dtos.SignUpRequest;
 import bookstore.authservice.services.AccountService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,11 +31,13 @@ public class AuthController {
 
     private final AccountService accountService;
     private final RestTemplate restTemplate;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(AccountService authService) {
+    public AuthController(AccountService authService, AuthenticationManager authenticationManager) {
        this.accountService = authService;
-         this.restTemplate = new RestTemplate();
+       this.restTemplate = new RestTemplate();
+       this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/sign-up")
@@ -107,8 +111,29 @@ public class AuthController {
     }
 
 
-//    @PostMapping("/sign-in")
-//    public ResponseEntity<ApiResponse<?>> signInUser(@RequestBody @Valid SignInRequest signInRequest){
-//        return authService.signIn(signInRequest);
-//    }
+    @PostMapping("/sign-in")
+    public ResponseEntity<?> signInUser(@RequestBody @Valid SignInRequest signInRequest, BindingResult bindingResult){
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            error -> error.getField(),
+                            error -> error.getDefaultMessage(),
+                            (existing, replacement) -> existing, // Giữ lỗi đầu tiên nếu có trùng key
+                            LinkedHashMap::new
+                    ));
+
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("errors", errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        try {
+            ResponseEntity<?> result = accountService.signIn(signInRequest, authenticationManager);
+            return result;
+        } catch (IllegalArgumentException ex) {
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 }

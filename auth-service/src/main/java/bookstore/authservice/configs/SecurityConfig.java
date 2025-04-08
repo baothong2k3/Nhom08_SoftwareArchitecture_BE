@@ -42,6 +42,11 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();  // Sử dụng thuật toán BCrypt
     }
 
+    /**
+     * Cung cấp AuthenticationProvider
+     * @param accountService
+     * @return
+     */
     @Bean
     DaoAuthenticationProvider authenticationProvider(@Autowired AccountService accountService) {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();

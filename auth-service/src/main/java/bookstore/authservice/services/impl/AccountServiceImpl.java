@@ -1,6 +1,7 @@
 package bookstore.authservice.services.impl;
 
 
+import bookstore.authservice.dtos.JwtRespone;
 import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.entities.Account;
 import bookstore.authservice.repositories.AccountRepository;
@@ -11,6 +12,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +27,7 @@ import java.util.Map;
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+
     private final JwtService jwtService;
     private final ModelMapper modelMapper;
 
@@ -63,8 +69,41 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public ResponseEntity<?> signIn(SignInRequest signInRequest) {
-        return null;
+    public ResponseEntity<?> signIn(SignInRequest signInRequest, AuthenticationManager authenticationManager) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        try {
+            // Xác định người dùng nhập email hay số điện thoại
+            String identifier = (signInRequest.getEmail() != null && !signInRequest.getEmail().isEmpty())
+                    ? signInRequest.getEmail()
+                    : signInRequest.getPhoneNumber();
+
+            if (identifier == null || signInRequest.getPassword() == null) {
+                response.put("success", false);
+                response.put("message", "Email/Phone number and password cannot be blank.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Xác thực người dùng
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(identifier, signInRequest.getPassword()));
+
+            // Nếu xác thực thành công, tạo JWT token
+            if (authentication.isAuthenticated()) {
+                final String token = jwtService.generateToken((UserDetails) authentication.getPrincipal()); // Tạo JWT token
+                response.put("success", true);
+                response.put("message", "Login successful");
+                response.put("token", token);
+
+                return ResponseEntity.ok(response);
+            }
+        } catch (AuthenticationException e) {
+            response.put("success", false);
+            response.put("message", "Incorrect login information.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        response.put("success", false);
+        response.put("message", "Login failed due to an unknown error.");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @Override
@@ -72,6 +111,12 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.existsByPhoneNumber(phoneNumber);
     }
 
+    /**
+     * Tìm kiếm người dùng theo tên đăng nhập (email hoặc số điện thoại)
+     * @param username
+     * @return : UserDetails (username, password, roles)
+     * @throws UsernameNotFoundException
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Tìm theo email hoặc số điện thoại
@@ -79,8 +124,14 @@ public class AccountServiceImpl implements AccountService {
                 .or(() -> accountRepository.findByPhoneNumber(username))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email or phone: " + username));
 
+        // Lấy role hoặc set mặc định nếu null
+        String role = account.getRole();
+        if (role == null || role.isBlank()) {
+            role = "USER";
+        }
+
         return org.springframework.security.core.userdetails.User.builder()
-                .username(account.getPhoneNumber())
+                .username(username)
                 .password(account.getPassword())
                 .roles(account.getRole())
                 .build();
