@@ -107,6 +107,7 @@ public class JWTGlobalFilter implements WebFilter {
         // Bỏ qua các yêu cầu đến các đường dẫn không cần xác thực
         if (
                 path.contains("/api/auth/sign-up") ||
+                path.contains("/api/auth/sign-in") ||
                 path.contains("/api/user/save")) {
             return chain.filter(exchange);
         }

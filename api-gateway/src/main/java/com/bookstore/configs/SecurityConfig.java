@@ -23,7 +23,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
         http.csrf(csrfSpec -> csrfSpec.disable())
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers("/api/auth/sign-up", "/api/auth/login").permitAll()
+                        .pathMatchers("/api/auth/sign-up", "/api/auth/sign-in").permitAll()
                         .pathMatchers("/products/**", "/orders/**", "/customers/**").authenticated()
                         .anyExchange().permitAll()
                 )
