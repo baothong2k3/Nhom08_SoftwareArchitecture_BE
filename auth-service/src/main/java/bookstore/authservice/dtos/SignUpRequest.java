@@ -24,8 +24,12 @@ public class SignUpRequest {
 
 
     @Pattern(regexp = "^(0|\\+84)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$",
-            message = "Please input a valid Vietnamese phone number!")
+            message = "Số điện thoại không hợp lệ!")
     private String phoneNumber;
+
+
+    @NotBlank(message = "Mã xác thực là bắt buộc!")
+    private String otp;
 
     private String role = "USER";
 }

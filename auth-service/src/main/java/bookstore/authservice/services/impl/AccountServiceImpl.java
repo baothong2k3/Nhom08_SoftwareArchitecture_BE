@@ -1,18 +1,17 @@
 package bookstore.authservice.services.impl;
 
 
-import bookstore.authservice.dtos.JwtRespone;
 import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.entities.Account;
 import bookstore.authservice.repositories.AccountRepository;
 import bookstore.authservice.services.AccountService;
 import bookstore.authservice.dtos.SignUpRequest;
 import bookstore.authservice.services.JwtService;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -22,28 +21,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.security.core.GrantedAuthority;
 
 @Service
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
-
     private final JwtService jwtService;
-    private final ModelMapper modelMapper;
-
 
     @Autowired
     public AccountServiceImpl(
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            ModelMapper modelMapper) {
+            JwtService jwtService) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.modelMapper = modelMapper;
     }
-
 
     @Override
     public ResponseEntity<?> signUp(SignUpRequest signUpRequest) {
@@ -71,52 +65,58 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public ResponseEntity<?> signIn(SignInRequest signInRequest, AuthenticationManager authenticationManager) {
         Map<String, Object> response = new LinkedHashMap<>();
-        try {
-            // Xác định người dùng nhập email hay số điện thoại
-            String identifier = (signInRequest.getEmail() != null && !signInRequest.getEmail().isEmpty())
-                    ? signInRequest.getEmail()
-                    : signInRequest.getPhoneNumber();
+        Map<String, String> errorMap = new LinkedHashMap<>();
 
-            if (identifier == null || signInRequest.getPassword() == null) {
-                response.put("success", false);
-                response.put("message", "Email/Phone number and password cannot be blank.");
-                return ResponseEntity.badRequest().body(response);
-            }
+        String username = signInRequest.getUsername();
+        String password = signInRequest.getPassword();
+
+        try {
+            // Load UserDetails (gây UsernameNotFoundException nếu không tìm thấy)
+            UserDetails userDetails = loadUserByUsername(username);
 
             // Xác thực người dùng
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(identifier, signInRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(userDetails.getUsername(), password));
 
-            // Nếu xác thực thành công, tạo JWT token
+            // Nếu xác thực thành công → tạo token + role
             if (authentication.isAuthenticated()) {
-                final String token = jwtService.generateToken((UserDetails) authentication.getPrincipal()); // Tạo JWT token
-                response.put("success", true);
-                response.put("message", "Login successful");
-                response.put("token", token);
+                String token = jwtService.generateToken(userDetails);
+                String role = userDetails.getAuthorities().stream()
+                        .findFirst()
+                        .map(GrantedAuthority::getAuthority)
+                        .orElse("ROLE_USER");
 
+                response.put("success", true);
+                response.put("message", "Đăng nhập thành công");
+                response.put("token", token);
+                response.put("role", role);
                 return ResponseEntity.ok(response);
             }
+
         } catch (AuthenticationException e) {
-            response.put("success", false);
-            response.put("message", "Incorrect login information.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            if (e instanceof BadCredentialsException) {
+                errorMap.put("password", "Mật khẩu không đúng. Vui lòng thử lại.");
+            } else if (e instanceof UsernameNotFoundException) {
+                errorMap.put("username", "Tài khoản không tồn tại trong hệ thống.");
+            } else {
+                errorMap.put("message", "Xác thực thất bại. Vui lòng kiểm tra lại thông tin.");
+            }
+        } catch (Exception e) {
+            errorMap.put("message", "Đã xảy ra lỗi trong quá trình đăng nhập.");
+            return buildErrorResponse(errorMap, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("success", false);
-        response.put("message", "Login failed due to an unknown error.");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+
+        // Nếu có lỗi, trả về tất cả lỗi cùng lúc
+        return buildErrorResponse(errorMap, HttpStatus.UNAUTHORIZED);
     }
+
 
     @Override
     public boolean existsByPhoneNumber(String phoneNumber) {
         return accountRepository.existsByPhoneNumber(phoneNumber);
     }
 
-    /**
-     * Tìm kiếm người dùng theo tên đăng nhập (email hoặc số điện thoại)
-     * @param username
-     * @return : UserDetails (username, password, roles)
-     * @throws UsernameNotFoundException
-     */
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Tìm theo email hoặc số điện thoại
@@ -133,7 +133,18 @@ public class AccountServiceImpl implements AccountService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(username)
                 .password(account.getPassword())
-                .roles(account.getRole())
+                .roles(role)
                 .build();
     }
+
+
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(Map<String, String> errors, HttpStatus status) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", false);
+        response.put("status", status.value());
+        response.put("errors", errors);
+        return ResponseEntity.status(status).body(response);
+    }
+
+
 }

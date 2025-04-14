@@ -1,21 +1,17 @@
 package bookstore.authservice.controllers;
 
+import bookstore.authservice.dtos.SendOtpRequest;
 import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.dtos.SignUpRequest;
 import bookstore.authservice.services.AccountService;
+import bookstore.authservice.services.OtpService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -32,12 +28,14 @@ public class AuthController {
     private final AccountService accountService;
     private final RestTemplate restTemplate;
     private final AuthenticationManager authenticationManager;
+    private final OtpService otpService;
 
     @Autowired
-    public AuthController(AccountService authService, AuthenticationManager authenticationManager) {
-       this.accountService = authService;
-       this.restTemplate = new RestTemplate();
-       this.authenticationManager = authenticationManager;
+    public AuthController(AccountService authService, AuthenticationManager authenticationManager, OtpService otpService) {
+        this.accountService = authService;
+        this.restTemplate = new RestTemplate();
+        this.authenticationManager = authenticationManager;
+        this.otpService = otpService;
     }
 
     @PostMapping("/sign-up")
@@ -59,8 +57,12 @@ public class AuthController {
 
         if (accountService.existsByPhoneNumber(signUpRequest.getPhoneNumber())) {
             response.put("status", HttpStatus.BAD_REQUEST.value());
-            response.put("errors", Map.of("phoneNumber", "Phone number already exists!"));
+            response.put("errors", Map.of("phoneNumber", "Số điện thoại đã tồn tại!"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        if (!otpService.verifyOtp(signUpRequest.getPhoneNumber(), signUpRequest.getOtp())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mã xác thực không hợp lệ!");
         }
 
         try {
@@ -94,8 +96,12 @@ public class AuthController {
             userInfo.put("phoneNumber", signUpRequest.getPhoneNumber());
             userInfo.put("enabled", true);
 
+            // Cấu hình header
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userInfo);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userInfo,headers);
 
             // Gửi HTTP POST request đến API save
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -127,6 +133,7 @@ public class AuthController {
             response.put("errors", errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+
         try {
             ResponseEntity<?> result = accountService.signIn(signInRequest, authenticationManager);
             return result;
@@ -135,5 +142,59 @@ public class AuthController {
             response.put("message", ex.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+    }
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody @Valid SendOtpRequest request, BindingResult bindingResult) {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            error -> error.getField(),
+                            error -> error.getDefaultMessage(),
+                            (existing, replacement) -> existing,
+                            LinkedHashMap::new
+                    ));
+
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("errors", errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        if (accountService.existsByPhoneNumber(request.getPhoneNumber())) {
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("errors", Map.of("phoneNumber", "Phone number already exists!"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        // Gửi OTP và xử lý lỗi chi tiết
+        try {
+            String otpStatus = otpService.generateOtp(request.getPhoneNumber());
+            if (otpStatus.startsWith("Failed")) {
+                response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                response.put("error", otpStatus);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", "OTP sent successfully!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("error", "An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Gửi lại OTP đến số điện thoại
+     * @param phoneNumber
+     * @return
+     */
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestParam String phoneNumber) {
+        otpService.generateOtp(phoneNumber);
+        return ResponseEntity.ok("OTP resent successfully!");
     }
 }
