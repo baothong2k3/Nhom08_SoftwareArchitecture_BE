@@ -1,19 +1,20 @@
 package com.bookstore.services;
 
 import com.bookstore.entities.Cart;
-
 import java.util.List;
 
 public interface CartService {
-    public Cart saveCart(Long bookId, Long userId);
+    Cart saveCart(Long bookId, Long userId, int stockQuantity);  // từ dev
 
-    public List<Cart> getCartsByUser(Long userId);
+    List<Cart> getCartsByUser(Long userId);
 
-    public Integer getCountCart(Long userId);
+    Integer getCountCart(Long userId);
 
-    public void updateQuantity(String sy, Long cartId);
+    void updateQuantity(String action, Long userId, Long bookId, int stockQuantity); // từ dev
 
-    public void deleteBookInCart(Long cartId);
+    void deleteBookInCart(Long userId, Long bookId); // từ dev
 
-    public void updateQuantityBookInCart(Cart cart);
+    void updateQuantityBookInCart(Cart cart); // từ nguyen
+
+    Long getUserIdByUsername(String username); // từ nguyen
 }
