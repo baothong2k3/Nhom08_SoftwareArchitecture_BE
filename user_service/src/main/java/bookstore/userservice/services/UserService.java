@@ -1,20 +1,22 @@
 package bookstore.userservice.services;
 
 import bookstore.userservice.dtos.UserDTO;
-import bookstore.userservice.entities.User;
-
+import bookstore.userservice.dtos.UserRequest;
 import java.util.List;
 
 public interface UserService {
+    
+    // Tạo hoặc cập nhật user
+    UserRequest save(UserRequest userRequest);
 
-    public boolean existsByEmail(String email);
+    // Kiểm tra tồn tại
+    boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByEmail(String email);
 
-    public boolean existsByUserName(String userName);
+    // Truy vấn user
+    UserDTO findById(Long id);
+    List<UserDTO> findAll();
 
-    public UserDTO findById(Long id);
-
-    public List<UserDTO> findAll();
-
-    public UserDTO save(UserDTO userDTO);
-
+    // ✅ Hàm lấy user từ JWT token
+    UserDTO getUserFromToken(String token);
 }
