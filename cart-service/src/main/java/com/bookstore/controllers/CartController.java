@@ -35,4 +35,24 @@ public class CartController {
 
         throw new RuntimeException("Authorization token not found or invalid");
     }
+
+    @PostMapping("/add")
+    public Cart addBookToCart(@RequestParam Long userId, @RequestParam Long bookId, @RequestParam int stockQuantity) {
+        return cartService.saveCart(bookId, userId, stockQuantity);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Cart> getUserCart(@PathVariable Long userId) {
+        return cartService.getCartsByUser(userId);
+    }
+
+    @PutMapping("/update")
+    public void updateCart(@RequestParam String action, @RequestParam Long userId, @RequestParam Long bookId, @RequestParam int stockQuantity) {
+        cartService.updateQuantity(action, userId, bookId, stockQuantity);
+    }
+
+    @DeleteMapping("/remove")
+    public void removeBookFromCart(@RequestParam Long userId, @RequestParam Long bookId) {
+        cartService.deleteBookInCart(userId, bookId);
+    }
 }
