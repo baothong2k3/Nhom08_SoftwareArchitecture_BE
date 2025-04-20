@@ -1,33 +1,31 @@
-package com.bookstore.controllers;
-
-import com.bookstore.dtos.BookDTO;
 import com.bookstore.entities.Book;
 import com.bookstore.services.BookService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
+
     @Autowired
     private BookService bookService;
+
     @Autowired
     private ModelMapper modelMapper;
 
     @GetMapping
-    public ResponseEntity<List<Book>> getAllBooks() {
-        List<Book> books = bookService.getAllBooks();
+    public ResponseEntity<List<BookDTO>> getAllBooks() {
+        List<BookDTO> books = bookService.getAllBooks();
         return ResponseEntity.ok(books);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-        Book book = bookService.getBookById(id);
+    public ResponseEntity<BookDTO> getBookById(@PathVariable Long id) {
+        BookDTO book = bookService.getBookById(id);
         if (book != null) {
             return ResponseEntity.ok(book);
         } else {
@@ -45,8 +43,8 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book book) {
-        Book updatedBook = bookService.updateBook(id, book);
+    public ResponseEntity<BookDTO> updateBook(@PathVariable Long id, @RequestBody BookDTO bookDTO) {
+        BookDTO updatedBook = bookService.updateBook(id, bookDTO);
         if (updatedBook != null) {
             return ResponseEntity.ok(updatedBook);
         } else {
