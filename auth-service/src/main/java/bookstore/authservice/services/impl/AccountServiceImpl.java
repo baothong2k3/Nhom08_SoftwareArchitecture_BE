@@ -116,6 +116,25 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.existsByPhoneNumber(phoneNumber);
     }
 
+    @Override
+    public boolean verifyPassword(String identity, String oldPassword) {
+        Account account = accountRepository.findByEmail(identity)
+                .or(() -> accountRepository.findByPhoneNumber(identity))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email or phone: " + identity));
+
+        return passwordEncoder.matches(oldPassword, account.getPassword());
+    }
+
+    @Override
+    public void updatePassword(String identity, String newPassword) {
+        Account account = accountRepository.findByEmail(identity)
+                .or(() -> accountRepository.findByPhoneNumber(identity))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email or phone: " + identity));
+
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

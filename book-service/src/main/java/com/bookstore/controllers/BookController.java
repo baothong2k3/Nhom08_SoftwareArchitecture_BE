@@ -1,7 +1,6 @@
-package com.bookstore.controllers;
-
-import com.bookstore.dtos.BookDTO;
+import com.bookstore.entities.Book;
 import com.bookstore.services.BookService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +10,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
+
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @GetMapping
     public ResponseEntity<List<BookDTO>> getAllBooks() {
@@ -30,9 +33,12 @@ public class BookController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<BookDTO> saveBook(@RequestBody BookDTO bookDTO) {
-        BookDTO savedBook = bookService.saveBook(bookDTO);
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<Book> saveBook(@ModelAttribute BookDTO bookDTO) {
+        System.out.println("DEBUG FILE: " + (bookDTO.getImageFile() != null ? bookDTO.getImageFile().getOriginalFilename() : "null"));
+
+        Book book = modelMapper.map(bookDTO, Book.class);
+        Book savedBook = bookService.saveBook(book, bookDTO.getImageFile());
         return ResponseEntity.ok(savedBook);
     }
 

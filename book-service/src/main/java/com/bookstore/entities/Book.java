@@ -2,6 +2,7 @@ package com.bookstore.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "book")
 public class Book {
 
@@ -37,6 +39,9 @@ public class Book {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "status", nullable = false)
+    private boolean status;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,4 +49,17 @@ public class Book {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Column( name = "updated_at")
+    private LocalDateTime updatedAt;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    private String publicId;
+
 }
