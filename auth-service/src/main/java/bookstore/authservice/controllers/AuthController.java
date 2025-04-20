@@ -1,5 +1,6 @@
 package bookstore.authservice.controllers;
 
+import bookstore.authservice.dtos.ChangePasswordRequest;
 import bookstore.authservice.dtos.SendOtpRequest;
 import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.dtos.SignUpRequest;
@@ -10,6 +11,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -87,7 +90,7 @@ public class AuthController {
      */
     private void saveUserInformation(SignUpRequest signUpRequest) {
         try {
-            String saveUserUrl = "http://localhost:8080/api/user/save";
+            String saveUserUrl = "http://localhost:8001/api/user/save";
 
 
 
@@ -197,4 +200,54 @@ public class AuthController {
         otpService.generateOtp(phoneNumber);
         return ResponseEntity.ok("OTP resent successfully!");
     }
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequest request, BindingResult bindingResult) {
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            error -> error.getField(),
+                            error -> error.getDefaultMessage(),
+                            (existing, replacement) -> existing,
+                            LinkedHashMap::new
+                    ));
+
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("errors", errors);
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            // Lấy username từ token đã xác thực
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // Không dùng username từ request nữa
+            boolean isOldPasswordValid = accountService.verifyPassword(username, request.getOldPassword());
+            if (!isOldPasswordValid) {
+                response.put("status", HttpStatus.BAD_REQUEST.value());
+                response.put("message", "Mật khẩu cũ không chính xác!");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+                response.put("status", HttpStatus.BAD_REQUEST.value());
+                response.put("message", "Mật khẩu mới và xác nhận mật khẩu không khớp!");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            accountService.updatePassword(username, request.getNewPassword());
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", "Đổi mật khẩu thành công!");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception ex) {
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "Đã xảy ra lỗi không mong muốn!");
+            response.put("error", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }
