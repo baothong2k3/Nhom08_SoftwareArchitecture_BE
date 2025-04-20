@@ -3,16 +3,22 @@ package com.bookstore.services.impl;
 import com.bookstore.entities.Book;
 import com.bookstore.repositories.BookRepository;
 import com.bookstore.services.BookService;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+
 @Service
 public class BookServiceImpl implements BookService {
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
+
     @Override
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
@@ -24,7 +30,16 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book saveBook(Book book) {
+    public Book saveBook(Book book, MultipartFile imageFile) {
+        try {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                var uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
+                book.setPublicId(uploadResult.get("public_id").toString());
+                book.setImageUrl(uploadResult.get("url").toString());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload image", e);
+        }
         return bookRepository.save(book);
     }
 
