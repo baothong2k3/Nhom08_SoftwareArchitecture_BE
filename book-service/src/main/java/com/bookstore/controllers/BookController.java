@@ -1,8 +1,13 @@
+package com.bookstore.controllers;
+import com.bookstore.dtos.BookDTO;
 import com.bookstore.entities.Book;
 import com.bookstore.services.BookService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
+    private static final Logger logger = LoggerFactory.getLogger(BookController.class);
 
     @Autowired
     private BookService bookService;
@@ -33,28 +39,24 @@ public class BookController {
         }
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @PostMapping(value = "/save",consumes = {"multipart/form-data"})
     public ResponseEntity<Book> saveBook(@ModelAttribute BookDTO bookDTO) {
-        System.out.println("DEBUG FILE: " + (bookDTO.getImageFile() != null ? bookDTO.getImageFile().getOriginalFilename() : "null"));
+        logger.info("Received save book request: {}", bookDTO.getTitle());
+        logger.debug("DEBUG FILE: {}", (bookDTO.getImageFile() != null ? bookDTO.getImageFile().getOriginalFilename() : "null"));
 
         Book book = modelMapper.map(bookDTO, Book.class);
         Book savedBook = bookService.saveBook(book, bookDTO.getImageFile());
         return ResponseEntity.ok(savedBook);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<BookDTO> updateBook(@PathVariable Long id, @RequestBody BookDTO bookDTO) {
-        BookDTO updatedBook = bookService.updateBook(id, bookDTO);
+    @PatchMapping("/{id}")
+    public ResponseEntity<BookDTO> partialUpdateBook(@PathVariable Long id, @RequestBody BookDTO bookDTO) {
+        logger.info("Partially updating book with ID: {}", id);
+        BookDTO updatedBook = bookService.partialUpdateBook(id, bookDTO);
         if (updatedBook != null) {
             return ResponseEntity.ok(updatedBook);
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        bookService.deleteBook(id);
-        return ResponseEntity.noContent().build();
     }
 }
