@@ -28,9 +28,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/books").permitAll() // Temporarily allow POST for testing
+                        .requestMatchers(HttpMethod.POST, "/api/books/save").permitAll() // Temporarily allow POST for testing
                         .requestMatchers(HttpMethod.PUT, "/api/books/**").permitAll() // Temporarily allow PUT for testing
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").permitAll() // Temporarily allow DELETE for testing
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/books/**").permitAll()// Temporarily allow DELETE for testing
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

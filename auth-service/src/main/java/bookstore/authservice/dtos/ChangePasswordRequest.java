@@ -10,6 +10,7 @@ package bookstore.authservice.dtos;/*
  */
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @AllArgsConstructor
@@ -19,12 +20,15 @@ import lombok.*;
 @ToString
 @Builder
 public class ChangePasswordRequest {
-    @NotBlank(message = "Old password is required!")
+    @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
+            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
     private String oldPassword;
 
-    @NotBlank(message = "New password is required!")
+    @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
+            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
     private String newPassword;
 
-    @NotBlank(message = "Confirm password is required!")
+    @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
+            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
     private String confirmPassword;
 }
