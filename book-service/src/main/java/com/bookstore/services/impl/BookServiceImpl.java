@@ -92,4 +92,33 @@ public class BookServiceImpl implements BookService {
                 })
                 .orElse(null);
     }
+
+    @Override
+    public BookDTO updateBookImage(Long id, MultipartFile imageFile) {
+        return bookRepository.findById(id)
+                .map(book -> {
+                    try {
+                        // Delete the existing image from Cloudinary if it exists
+                        if (book.getPublicId() != null && !book.getPublicId().isEmpty()) {
+                            cloudinary.uploader().destroy(book.getPublicId(), ObjectUtils.emptyMap());
+                        }
+                        
+                        // Upload the new image
+                        var uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
+                        
+                        // Update book with new image information
+                        book.setPublicId(uploadResult.get("public_id").toString());
+                        book.setImageUrl(uploadResult.get("url").toString());
+                        
+                        // The updatedAt field will be set by the @PreUpdate method
+                        
+                        // Save the updated book
+                        Book savedBook = bookRepository.save(book);
+                        return modelMapper.map(savedBook, BookDTO.class);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to update book image", e);
+                    }
+                })
+                .orElse(null);
+    }
 }

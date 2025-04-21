@@ -11,4 +11,5 @@ public interface BookService {
     public BookDTO getBookById(Long id);
     public Book saveBook(Book book, MultipartFile imageFile);
     public BookDTO partialUpdateBook(Long id, BookDTO bookDTO);
+    public BookDTO updateBookImage(Long id, MultipartFile imageFile);
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -53,6 +54,21 @@ public class BookController {
     public ResponseEntity<BookDTO> partialUpdateBook(@PathVariable Long id, @RequestBody BookDTO bookDTO) {
         logger.info("Partially updating book with ID: {}", id);
         BookDTO updatedBook = bookService.partialUpdateBook(id, bookDTO);
+        if (updatedBook != null) {
+            return ResponseEntity.ok(updatedBook);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/update-image")
+    public ResponseEntity<BookDTO> updateBookImage(@PathVariable Long id, @RequestParam("imageFile") MultipartFile imageFile) {
+        logger.info("Updating image for book with ID: {}", id);
+        if (imageFile == null || imageFile.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        BookDTO updatedBook = bookService.updateBookImage(id, imageFile);
         if (updatedBook != null) {
             return ResponseEntity.ok(updatedBook);
         } else {
