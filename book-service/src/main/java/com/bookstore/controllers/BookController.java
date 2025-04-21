@@ -30,6 +30,12 @@ public class BookController {
         return ResponseEntity.ok(books);
     }
 
+    @GetMapping("/newest")
+    public ResponseEntity<List<BookDTO>> getNewestBooks() {
+        List<BookDTO> newestBooks = bookService.getNewestBooks();
+        return ResponseEntity.ok(newestBooks);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BookDTO> getBookById(@PathVariable Long id) {
         BookDTO book = bookService.getBookById(id);

@@ -121,4 +121,12 @@ public class BookServiceImpl implements BookService {
                 })
                 .orElse(null);
     }
+
+    @Override
+    public List<BookDTO> getNewestBooks() {
+        List<Book> books = bookRepository.findTop10ByOrderByCreatedAtDesc();
+        return books.stream()
+                .map(book -> modelMapper.map(book, BookDTO.class))
+                .collect(Collectors.toList());
+    }
 }
