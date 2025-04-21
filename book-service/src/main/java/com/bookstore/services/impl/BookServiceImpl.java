@@ -8,6 +8,8 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,11 +28,9 @@ public class BookServiceImpl implements BookService {
     private ModelMapper modelMapper;
 
     @Override
-    public List<BookDTO> getAllBooks() {
-        List<Book> books = bookRepository.findAll();
-        return books.stream()
-                .map(book -> modelMapper.map(book, BookDTO.class))
-                .collect(Collectors.toList());
+    public Page<BookDTO> getAllBooksPaged(int page, int size) {
+        Page<Book> booksPage = bookRepository.findAll(PageRequest.of(page, size));
+        return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
     }
 
     @Override
