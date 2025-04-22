@@ -92,4 +92,24 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found for userId: " + userId + " and bookId: " + bookId));
         cartRepository.delete(cart);
     }
+    @Override
+    public void increaseBookQuantity(Long userId, Long bookId) {
+        Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found for userId: " + userId + " and bookId: " + bookId));
+
+        String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
+        BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
+
+        if (bookDTO == null || !bookDTO.isStatus()) {
+            throw new IllegalArgumentException("Book not found or unavailable");
+        }
+
+        if (cart.getQuantity() + 1 > bookDTO.getStockQuantity()) {
+            cart.setQuantity(bookDTO.getStockQuantity());
+        } else {
+            cart.setQuantity(cart.getQuantity() + 1);
+        }
+
+        cartRepository.save(cart);
+    }
 }
