@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CartService {
     CartResponseDTO addBookToCart(Long userId, Long bookId);
+    List<CartResponseDTO> getAllBooksInCart(Long userId);
 }

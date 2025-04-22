@@ -22,4 +22,10 @@ public class CartController {
         CartResponseDTO response = cartService.addBookToCart(userId, bookId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<CartResponseDTO>> getAllBooksInCart(@RequestParam Long userId) {
+        List<CartResponseDTO> response = cartService.getAllBooksInCart(userId);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -59,4 +59,31 @@ public class CartServiceImpl implements CartService {
                 .bookImageUrl(bookDTO.getImageUrl())
                 .build();
     }
+    @Override
+    public List<CartResponseDTO> getAllBooksInCart(Long userId) {
+        List<Cart> cartItems = cartRepository.findByUserId(userId);
+
+        return cartItems.stream().map(cart -> {
+            String bookServiceUrl = "http://localhost:8003/api/books/" + cart.getBookId();
+            BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
+
+            if (bookDTO == null) {
+                throw new IllegalArgumentException("Book not found for ID: " + cart.getBookId());
+            }
+
+            return CartResponseDTO.builder()
+                    .cartId(cart.getId())
+                    .userId(cart.getUserId())
+                    .bookId(cart.getBookId())
+                    .quantity(cart.getQuantity())
+                    .bookTitle(bookDTO.getTitle())
+                    .bookAuthor(bookDTO.getAuthor())
+                    .stockQuantity(bookDTO.getStockQuantity())
+                    .bookCategory(bookDTO.getCategory())
+                    .bookDescription(bookDTO.getDescription())
+                    .bookStatus(bookDTO.isStatus())
+                    .bookImageUrl(bookDTO.getImageUrl())
+                    .build();
+        }).collect(Collectors.toList());
+    }
 }
