@@ -112,4 +112,17 @@ public class CartServiceImpl implements CartService {
 
         cartRepository.save(cart);
     }
+
+    @Override
+    public void decreaseBookQuantity(Long userId, Long bookId) {
+        Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found for userId: " + userId + " and bookId: " + bookId));
+
+        if (cart.getQuantity() - 1 <= 0) {
+            cartRepository.delete(cart);
+        } else {
+            cart.setQuantity(cart.getQuantity() - 1);
+            cartRepository.save(cart);
+        }
+    }
 }

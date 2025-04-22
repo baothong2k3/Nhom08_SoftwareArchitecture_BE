@@ -45,4 +45,12 @@ public class CartController {
         List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
         return ResponseEntity.ok(updatedCart);
     }
+    @PatchMapping("/decrease")
+    public ResponseEntity<List<CartResponseDTO>> decreaseBookQuantity(
+            @RequestParam Long userId,
+            @RequestParam Long bookId) {
+        cartService.decreaseBookQuantity(userId, bookId);
+        List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
+        return ResponseEntity.ok(updatedCart);
+    }
 }
