@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class BookDTO {
+    private Long id;
     private String title;
     private String author;
     private BigDecimal price;
