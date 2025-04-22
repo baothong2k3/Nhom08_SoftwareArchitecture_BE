@@ -1,79 +1,62 @@
-package com.bookstore.cartservice.services.impl;
+package com.bookstore.services.impl;
 
-import com.bookstore.cartservice.clients.UserClient;
-import com.bookstore.cartservice.dtos.UserDTO;
-import com.bookstore.cartservice.entities.Cart;
-import com.bookstore.cartservice.repositories.CartRepository;
-import com.bookstore.cartservice.services.CartService;
+import com.bookstore.dtos.BookDTO;
+import com.bookstore.dtos.CartResponseDTO;
+import com.bookstore.entities.Cart;
+import com.bookstore.repositories.CartRepository;
+import com.bookstore.services.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
 
-    private final CartRepository cartRepository;
-    private final UserClient userClient;
+    @Autowired
+    private CartRepository cartRepository;
 
-    public CartServiceImpl(CartRepository cartRepository, UserClient userClient) {
-        this.cartRepository = cartRepository;
-        this.userClient = userClient;
-    }
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Override
-    public Long getUserIdByUsername(String token) {
-        UserDTO userDTO = userClient.getCurrentUser(token);
-        return userDTO != null ? userDTO.getId() : null;
-    }
+    public CartResponseDTO addBookToCart(Long userId, Long bookId) {
+        // Gọi Book Service để lấy thông tin book
+        String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
+        BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
-    @Override
-    public Cart saveCart(Long bookId, Long userId, int stockQuantity) {
-        Optional<Cart> existingCart = cartRepository.findByUserIdAndBookId(userId, bookId);
-        if (existingCart.isPresent()) {
-            Cart cart = existingCart.get();
-            cart.setQuantity(cart.getQuantity() + stockQuantity);
-            return cartRepository.save(cart);
+        if (bookDTO == null || !bookDTO.isStatus()) {
+            throw new IllegalArgumentException("Book not found or unavailable");
         }
-        Cart newCart = new Cart(null, userId, bookId, stockQuantity);
-        return cartRepository.save(newCart);
-    }
 
-    @Override
-    public List<Cart> getCartsByUser(Long userId) {
-        return cartRepository.findByUserId(userId);
-    }
+        // Kiểm tra xem book đã có trong cart chưa
+        Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
+                .orElse(new Cart(null, userId, bookId, 0));
 
-    @Override
-    public Integer getCountCart(Long userId) {
-        return cartRepository.findByUserId(userId).size();
-    }
-
-    @Override
-    public void updateQuantity(String action, Long userId, Long bookId, int stockQuantity) {
-        Optional<Cart> existingCart = cartRepository.findByUserIdAndBookId(userId, bookId);
-        if (existingCart.isPresent()) {
-            Cart cart = existingCart.get();
-            if ("increase".equals(action)) {
-                cart.setQuantity(cart.getQuantity() + stockQuantity);
-            } else if ("decrease".equals(action) && cart.getQuantity() > stockQuantity) {
-                cart.setQuantity(cart.getQuantity() - stockQuantity);
-            } else {
-                cartRepository.delete(cart);
-                return;
-            }
-            cartRepository.save(cart);
+        // Kiểm tra stock_quantity
+        if (cart.getQuantity() + 1 > bookDTO.getStockQuantity()) {
+            throw new IllegalArgumentException("Cannot add more books than available stock");
         }
-    }
 
-    @Override
-    public void deleteBookInCart(Long userId, Long bookId) {
-        cartRepository.deleteByUserIdAndBookId(userId, bookId);
-    }
+        // Tăng quantity và lưu cart
+        cart.setQuantity(cart.getQuantity() + 1);
+        Cart savedCart = cartRepository.save(cart);
 
-    @Override
-    public void updateQuantityBookInCart(Cart cart) {
-        cartRepository.save(cart);
+        // Trả về thông tin cart và book
+        return CartResponseDTO.builder()
+                .cartId(savedCart.getId())
+                .userId(savedCart.getUserId())
+                .bookId(savedCart.getBookId())
+                .quantity(savedCart.getQuantity())
+                .bookTitle(bookDTO.getTitle())
+                .bookAuthor(bookDTO.getAuthor())
+                .stockQuantity(bookDTO.getStockQuantity())
+                .bookCategory(bookDTO.getCategory())
+                .bookDescription(bookDTO.getDescription())
+                .bookStatus(bookDTO.isStatus())
+                .bookImageUrl(bookDTO.getImageUrl())
+                .build();
     }
 }
