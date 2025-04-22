@@ -28,4 +28,13 @@ public class CartController {
         List<CartResponseDTO> response = cartService.getAllBooksInCart(userId);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/remove")
+    public ResponseEntity<List<CartResponseDTO>> removeBookFromCart(
+            @RequestParam Long userId,
+            @RequestParam Long bookId) {
+        cartService.removeBookFromCart(userId, bookId);
+        List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
+        return ResponseEntity.ok(updatedCart);
+    }
 }

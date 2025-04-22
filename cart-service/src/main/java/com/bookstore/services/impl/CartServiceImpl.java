@@ -86,4 +86,10 @@ public class CartServiceImpl implements CartService {
                     .build();
         }).collect(Collectors.toList());
     }
+    @Override
+    public void removeBookFromCart(Long userId, Long bookId) {
+        Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found for userId: " + userId + " and bookId: " + bookId));
+        cartRepository.delete(cart);
+    }
 }
