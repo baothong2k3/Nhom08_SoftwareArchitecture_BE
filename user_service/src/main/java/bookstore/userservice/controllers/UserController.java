@@ -1,5 +1,6 @@
 package bookstore.userservice.controllers;
 
+
 import bookstore.userservice.dtos.ApiResponse;
 import bookstore.userservice.dtos.UserDTO;
 import bookstore.userservice.dtos.UserRequest;
@@ -14,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,30 +34,32 @@ public class UserController {
         this.addressService = addressService;
     }
 
+
     @Operation(summary = "Save user", description = "Save a new user")
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> save(@Valid @RequestBody UserRequest userRequest, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>();
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
 
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = bindingResult.getFieldErrors().stream()
                     .collect(Collectors.toMap(
                             error -> error.getField(),
                             error -> error.getDefaultMessage(),
-                            (existing, replacement) -> existing,
+                            (existing, replacement) -> existing, // Giữ lỗi đầu tiên nếu có trùng key
                             LinkedHashMap::new
-                    ));
+        ));
 
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("errors", errors);
             return ResponseEntity.badRequest().body(response);
         }
-
+        // Kiểm tra xem số điện thoại đã tồn tại hay chưa
         if (userService.existsByPhoneNumber(userRequest.getPhoneNumber())) {
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("errors", Map.of("phoneNumber", "Số điện thoại đã tồn tại trong hệ thống!"));
             return ResponseEntity.badRequest().body(response);
         }
+
 
         try {
             UserRequest savedUser = userService.save(userRequest);
@@ -69,7 +71,7 @@ public class UserController {
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("message", ex.getMessage());
             return ResponseEntity.badRequest().body(response);
-        } catch (DataIntegrityViolationException ex) {
+        } catch (DataIntegrityViolationException ex) { // Bắt lỗi trùng số điện thoại
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("errors", Map.of("phoneNumber", "Số điện thoại đã tồn tại trong hệ thống!"));
             return ResponseEntity.badRequest().body(response);
@@ -80,6 +82,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
 
     @GetMapping("/{id}")
     @Operation(summary = "getUserById", description = "Get user by id")
@@ -93,6 +96,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/all")
     @Operation(summary = "getAllUsers", description = "Get all users")
     public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
@@ -101,18 +105,6 @@ public class UserController {
                 .status("SUCCESS")
                 .message("Get user list successfully")
                 .response(users)
-                .build();
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Get current user", description = "Lấy thông tin người dùng hiện tại từ JWT token")
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        UserDTO userDTO = userService.getUserFromToken(authHeader);
-        ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                .status("SUCCESS")
-                .message("Lấy thông tin người dùng thành công")
-                .response(userDTO)
                 .build();
         return ResponseEntity.ok(response);
     }
