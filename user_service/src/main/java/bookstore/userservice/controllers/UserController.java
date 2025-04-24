@@ -1,9 +1,8 @@
 package bookstore.userservice.controllers;
 
 
-import bookstore.userservice.dtos.ApiResponse;
-import bookstore.userservice.dtos.UserDTO;
-import bookstore.userservice.dtos.UserRequest;
+import bookstore.userservice.dtos.*;
+import bookstore.userservice.entities.Address;
 import bookstore.userservice.services.AddressService;
 import bookstore.userservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -107,5 +106,140 @@ public class UserController {
                 .response(users)
                 .build();
         return ResponseEntity.ok(response);
+    }
+    @PostMapping("/add-address")
+    @Operation(summary = "Add address to user", description = "Add a new address for a user")
+    public ResponseEntity<ApiResponse<Address>> addAddress(@Valid @RequestBody AddressRequest addressRequest) {
+        try {
+            Address savedAddress = addressService.addAddress(addressRequest);
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("SUCCESS")
+                    .message("Address added successfully")
+                    .response(savedAddress)
+                    .build();
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/{id}/addresses")
+    @Operation(summary = "Get all addresses of a user", description = "Retrieve all addresses associated with a user")
+    public ResponseEntity<ApiResponse<List<AddressDTO>>> getUserAddresses(@PathVariable Long id) {
+        try {
+            List<AddressDTO> addresses = addressService.getAddressesByUserId(id);
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("SUCCESS")
+                    .message("Addresses fetched successfully")
+                    .response(addresses)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/update-address")
+    @Operation(summary = "Update address of a user", description = "Update an existing address for a user")
+    public ResponseEntity<ApiResponse<Address>> updateAddress(@Valid @RequestBody UpdateAddressRequest updateAddressRequest) {
+        try {
+            Address updatedAddress = addressService.updateAddress(updateAddressRequest);
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("SUCCESS")
+                    .message("Address updated successfully")
+                    .response(updatedAddress)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/delete-address/{id}")
+    @Operation(summary = "Delete address of a user", description = "Delete an existing address by its ID and return remaining addresses")
+    public ResponseEntity<ApiResponse<List<AddressDTO>>> deleteAddress(@PathVariable Long id) {
+        try {
+            // Fetch the address to get the associated user
+            Address address = addressService.findById(id);
+            Long userId = address.getUser().getId();
+
+            // Delete the address
+            addressService.deleteAddressById(id);
+
+            // Fetch remaining addresses of the user
+            List<AddressDTO> remainingAddresses = addressService.getAddressesByUserId(userId);
+
+            // Build the response
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("SUCCESS")
+                    .message("Address deleted successfully")
+                    .response(remainingAddresses)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/{id}/update")
+    @Operation(summary = "Update user information", description = "Update fullName, dob, and email of a user")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        try {
+            UserDTO updatedUser = userService.updateUser(id, updateUserRequest);
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("SUCCESS")
+                    .message("User updated successfully")
+                    .response(updatedUser)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }
