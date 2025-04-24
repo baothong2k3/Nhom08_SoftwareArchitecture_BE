@@ -3,6 +3,7 @@ package bookstore.userservice.services.impl;
 
 import bookstore.userservice.dtos.AddressDTO;
 import bookstore.userservice.dtos.AddressRequest;
+import bookstore.userservice.dtos.UpdateAddressRequest;
 import bookstore.userservice.entities.Address;
 import bookstore.userservice.entities.User;
 import bookstore.userservice.repositories.AddressRepository;
@@ -51,6 +52,15 @@ public class AddressServiceImpl implements AddressService {
                 .user(user)
                 .build();
 
+        return addressRepository.save(address);
+    }
+
+    @Override
+    public Address updateAddress(UpdateAddressRequest updateAddressRequest) {
+        Address address = addressRepository.findById(updateAddressRequest.getAddressId())
+                .orElseThrow(() -> new IllegalArgumentException("Address not found with ID: " + updateAddressRequest.getAddressId()));
+
+        address.setAddress(updateAddressRequest.getNewAddress());
         return addressRepository.save(address);
     }
 }
