@@ -53,4 +53,9 @@ public class CartController {
         List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
         return ResponseEntity.ok(updatedCart);
     }
+    @DeleteMapping("/clear")
+    public ResponseEntity<Void> clearCart(@RequestParam Long userId) {
+        cartService.clearCart(userId);
+        return ResponseEntity.ok().build();
+    }
 }

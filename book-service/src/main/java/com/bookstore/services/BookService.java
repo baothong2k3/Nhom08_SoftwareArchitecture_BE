@@ -14,4 +14,5 @@ public interface BookService {
     public BookDTO partialUpdateBook(Long id, BookDTO bookDTO);
     public BookDTO updateBookImage(Long id, MultipartFile imageFile);
     List<BookDTO> getNewestBooks();
+    void updateStockQuantity(Long id, int quantity);
 }

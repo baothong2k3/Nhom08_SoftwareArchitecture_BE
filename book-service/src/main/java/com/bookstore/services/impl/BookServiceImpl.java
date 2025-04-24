@@ -129,4 +129,15 @@ public class BookServiceImpl implements BookService {
                 .map(book -> modelMapper.map(book, BookDTO.class))
                 .collect(Collectors.toList());
     }
+    @Override
+    public void updateStockQuantity(Long id, int quantity) {
+        bookRepository.findById(id).ifPresent(book -> {
+            if (book.getStockQuantity() >= quantity) {
+                book.setStockQuantity(book.getStockQuantity() - quantity);
+                bookRepository.save(book);
+            } else {
+                throw new IllegalArgumentException("Not enough stock for book ID: " + id);
+            }
+        });
+    }
 }
