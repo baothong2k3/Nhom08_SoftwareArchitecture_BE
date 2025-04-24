@@ -81,4 +81,10 @@ public class AddressServiceImpl implements AddressService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Address findById(Long addressId) {
+        return addressRepository.findById(addressId)
+                .orElseThrow(() -> new IllegalArgumentException("Address not found with ID: " + addressId));
+    }
 }

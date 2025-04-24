@@ -14,4 +14,5 @@ public interface AddressService {
     Address updateAddress(UpdateAddressRequest updateAddressRequest);
     void deleteAddressById(Long addressId);
     List<AddressDTO> getAddressesByUserId(Long userId);
+    Address findById(Long addressId);
 }

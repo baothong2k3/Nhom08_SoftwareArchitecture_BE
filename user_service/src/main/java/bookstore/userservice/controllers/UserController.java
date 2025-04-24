@@ -178,4 +178,40 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @DeleteMapping("/delete-address/{id}")
+    @Operation(summary = "Delete address of a user", description = "Delete an existing address by its ID and return remaining addresses")
+    public ResponseEntity<ApiResponse<List<AddressDTO>>> deleteAddress(@PathVariable Long id) {
+        try {
+            // Fetch the address to get the associated user
+            Address address = addressService.findById(id);
+            Long userId = address.getUser().getId();
+
+            // Delete the address
+            addressService.deleteAddressById(id);
+
+            // Fetch remaining addresses of the user
+            List<AddressDTO> remainingAddresses = addressService.getAddressesByUserId(userId);
+
+            // Build the response
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("SUCCESS")
+                    .message("Address deleted successfully")
+                    .response(remainingAddresses)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
