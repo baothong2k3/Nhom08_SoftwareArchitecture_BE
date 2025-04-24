@@ -75,4 +75,35 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
         return order.getOrderDetails();
     }
+
+    @Override
+    public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
+
+        // Validate status transition
+        if (!isValidStatusTransition(order.getStatus(), newStatus)) {
+            throw new IllegalArgumentException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
+        }
+
+        order.setStatus(newStatus);
+        return orderRepository.save(order);
+    }
+
+    private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+        switch (currentStatus) {
+            case PLACED:
+                return newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED;
+            case CONFIRMED:
+                return newStatus == OrderStatus.SHIPPING || newStatus == OrderStatus.CANCELED;
+            case SHIPPING:
+                return newStatus == OrderStatus.DELIVERED;
+            case DELIVERED:
+                return newStatus == OrderStatus.REJECTED;
+            case CANCELED:
+                return false; // No transitions allowed
+            default:
+                return false;
+        }
+    }
 }

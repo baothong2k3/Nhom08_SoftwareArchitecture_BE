@@ -49,6 +49,13 @@ public class OrderController {
 
         return ResponseEntity.ok(order);
     }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<Order>> getOrdersByUser(@RequestParam Long userId) {
+        List<Order> orders = orderService.getOrdersByUserId(userId);
+        return ResponseEntity.ok(orders);
+    }
+
     @GetMapping("/status")
     public ResponseEntity<List<Order>> getOrdersByStatus(@RequestParam OrderStatus status) {
         List<Order> orders = orderService.getOrdersByStatus(status);
@@ -58,5 +65,13 @@ public class OrderController {
     public ResponseEntity<List<OrderDetail>> getOrderDetailsByOrderId(@PathVariable Long orderId) {
         List<OrderDetail> orderDetails = orderService.getOrderDetailsByOrderId(orderId);
         return ResponseEntity.ok(orderDetails);
+    }
+
+    @PatchMapping("/{orderId}/update-status")
+    public ResponseEntity<Order> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestParam OrderStatus newStatus) {
+        Order updatedOrder = orderService.updateOrderStatus(orderId, newStatus);
+        return ResponseEntity.ok(updatedOrder);
     }
 }

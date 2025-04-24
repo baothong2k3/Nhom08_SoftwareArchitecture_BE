@@ -12,4 +12,5 @@ public interface OrderService {
     List<Order> getOrdersByUserId(Long userId);
     List<Order> getOrdersByStatus(OrderStatus status);
     List<OrderDetail> getOrderDetailsByOrderId(Long orderId);
+    Order updateOrderStatus(Long orderId, OrderStatus newStatus);
 }

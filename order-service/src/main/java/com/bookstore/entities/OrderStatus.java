@@ -5,5 +5,6 @@ public enum OrderStatus {
     CONFIRMED, // Đã nhận đơn hàng
     SHIPPING, // Đang vận chuyển
     DELIVERED, // Đã giao hàng
-    CANCELED // Đã hủy
+    CANCELED, // Đã hủy
+    REJECTED // Không nhận hàng
 }
