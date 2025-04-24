@@ -61,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order save(Order order) {
-        return orderRepository.save(order);
+    public List<Order> getOrdersByUserId(Long userId) {
+        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
 }
