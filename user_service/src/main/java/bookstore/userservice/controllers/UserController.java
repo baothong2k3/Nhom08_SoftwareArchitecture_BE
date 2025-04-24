@@ -214,4 +214,32 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @PutMapping("/{id}/update")
+    @Operation(summary = "Update user information", description = "Update fullName, dob, and email of a user")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        try {
+            UserDTO updatedUser = userService.updateUser(id, updateUserRequest);
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("SUCCESS")
+                    .message("User updated successfully")
+                    .response(updatedUser)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
