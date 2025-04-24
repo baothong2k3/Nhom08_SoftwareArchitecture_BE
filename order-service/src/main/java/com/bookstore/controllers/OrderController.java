@@ -2,6 +2,7 @@ package com.bookstore.controllers;
 
 import com.bookstore.dtos.CartResponseDTO;
 import com.bookstore.entities.Order;
+import com.bookstore.entities.OrderDetail;
 import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,5 +53,10 @@ public class OrderController {
     public ResponseEntity<List<Order>> getOrdersByStatus(@RequestParam OrderStatus status) {
         List<Order> orders = orderService.getOrdersByStatus(status);
         return ResponseEntity.ok(orders);
+    }
+    @GetMapping("/{orderId}/details")
+    public ResponseEntity<List<OrderDetail>> getOrderDetailsByOrderId(@PathVariable Long orderId) {
+        List<OrderDetail> orderDetails = orderService.getOrderDetailsByOrderId(orderId);
+        return ResponseEntity.ok(orderDetails);
     }
 }

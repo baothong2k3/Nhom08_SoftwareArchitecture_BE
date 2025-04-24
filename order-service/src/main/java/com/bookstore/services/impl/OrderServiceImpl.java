@@ -69,4 +69,10 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersByStatus(OrderStatus status) {
         return orderRepository.findAllByStatusOrderByCreatedAtDesc(status);
     }
+    @Override
+    public List<OrderDetail> getOrderDetailsByOrderId(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
+        return order.getOrderDetails();
+    }
 }
