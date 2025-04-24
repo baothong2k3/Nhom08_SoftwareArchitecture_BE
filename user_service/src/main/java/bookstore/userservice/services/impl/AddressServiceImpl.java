@@ -2,10 +2,11 @@ package bookstore.userservice.services.impl;
 
 
 import bookstore.userservice.dtos.AddressDTO;
-import bookstore.userservice.dtos.UserDTO;
+import bookstore.userservice.dtos.AddressRequest;
 import bookstore.userservice.entities.Address;
 import bookstore.userservice.entities.User;
 import bookstore.userservice.repositories.AddressRepository;
+import bookstore.userservice.repositories.UserRepository;
 import bookstore.userservice.services.AddressService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AddressServiceImpl implements AddressService {
-	@Autowired
+    @Autowired
     private AddressRepository addressRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     ModelMapper modelMapper;
@@ -29,11 +33,24 @@ public class AddressServiceImpl implements AddressService {
         Address address = modelMapper.map(addressDTO, Address.class);
         return address;
     }
-    
-	@Override
+
+    @Override
     public AddressDTO save(AddressDTO addressDTO) {
         Address address = this.convertToEntity(addressDTO);
         address = addressRepository.save(address);
         return this.convertToDTO(address);
+    }
+
+    @Override
+    public Address addAddress(AddressRequest addressRequest) {
+        User user = userRepository.findById(addressRequest.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + addressRequest.getUserId()));
+
+        Address address = Address.builder()
+                .address(addressRequest.getAddress())
+                .user(user)
+                .build();
+
+        return addressRepository.save(address);
     }
 }

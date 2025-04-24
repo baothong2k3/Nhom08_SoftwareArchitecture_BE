@@ -1,9 +1,11 @@
 package bookstore.userservice.controllers;
 
 
+import bookstore.userservice.dtos.AddressRequest;
 import bookstore.userservice.dtos.ApiResponse;
 import bookstore.userservice.dtos.UserDTO;
 import bookstore.userservice.dtos.UserRequest;
+import bookstore.userservice.entities.Address;
 import bookstore.userservice.services.AddressService;
 import bookstore.userservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -107,5 +109,30 @@ public class UserController {
                 .response(users)
                 .build();
         return ResponseEntity.ok(response);
+    }
+    @PostMapping("/add-address")
+    @Operation(summary = "Add address to user", description = "Add a new address for a user")
+    public ResponseEntity<ApiResponse<Address>> addAddress(@Valid @RequestBody AddressRequest addressRequest) {
+        try {
+            Address savedAddress = addressService.addAddress(addressRequest);
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("SUCCESS")
+                    .message("Address added successfully")
+                    .response(savedAddress)
+                    .build();
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("FAILURE")
+                    .message(ex.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ApiResponse<Address> response = ApiResponse.<Address>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }
