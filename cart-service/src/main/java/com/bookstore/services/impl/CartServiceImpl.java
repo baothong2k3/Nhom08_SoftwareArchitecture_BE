@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponseDTO addBookToCart(Long userId, Long bookId) {
-        // Gọi Book Service để lấy thông tin book
         String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
         BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
@@ -31,20 +31,18 @@ public class CartServiceImpl implements CartService {
             throw new IllegalArgumentException("Book not found or unavailable");
         }
 
-        // Kiểm tra xem book đã có trong cart chưa
         Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
                 .orElse(new Cart(null, userId, bookId, 0));
 
-        // Kiểm tra stock_quantity
         if (cart.getQuantity() + 1 > bookDTO.getStockQuantity()) {
             throw new IllegalArgumentException("Cannot add more books than available stock");
         }
 
-        // Tăng quantity và lưu cart
         cart.setQuantity(cart.getQuantity() + 1);
         Cart savedCart = cartRepository.save(cart);
 
-        // Trả về thông tin cart và book
+        BigDecimal totalPrice = bookDTO.getPrice().multiply(BigDecimal.valueOf(savedCart.getQuantity()));
+
         return CartResponseDTO.builder()
                 .cartId(savedCart.getId())
                 .userId(savedCart.getUserId())
@@ -57,8 +55,11 @@ public class CartServiceImpl implements CartService {
                 .bookDescription(bookDTO.getDescription())
                 .bookStatus(bookDTO.isStatus())
                 .bookImageUrl(bookDTO.getImageUrl())
+                .price(bookDTO.getPrice())
+                .totalPrice(totalPrice)
                 .build();
     }
+
     @Override
     public List<CartResponseDTO> getAllBooksInCart(Long userId) {
         List<Cart> cartItems = cartRepository.findByUserId(userId);
@@ -70,6 +71,8 @@ public class CartServiceImpl implements CartService {
             if (bookDTO == null) {
                 throw new IllegalArgumentException("Book not found for ID: " + cart.getBookId());
             }
+
+            BigDecimal totalPrice = bookDTO.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity()));
 
             return CartResponseDTO.builder()
                     .cartId(cart.getId())
@@ -83,9 +86,12 @@ public class CartServiceImpl implements CartService {
                     .bookDescription(bookDTO.getDescription())
                     .bookStatus(bookDTO.isStatus())
                     .bookImageUrl(bookDTO.getImageUrl())
+                    .price(bookDTO.getPrice())
+                    .totalPrice(totalPrice)
                     .build();
         }).collect(Collectors.toList());
     }
+
     @Override
     public void removeBookFromCart(Long userId, Long bookId) {
         Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
@@ -124,5 +130,10 @@ public class CartServiceImpl implements CartService {
             cart.setQuantity(cart.getQuantity() - 1);
             cartRepository.save(cart);
         }
+    }
+    @Override
+    public void clearCart(Long userId) {
+        List<Cart> cartItems = cartRepository.findByUserId(userId);
+        cartRepository.deleteAll(cartItems);
     }
 }

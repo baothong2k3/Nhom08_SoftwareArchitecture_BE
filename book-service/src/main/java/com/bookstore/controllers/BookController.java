@@ -84,4 +84,9 @@ public class BookController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PatchMapping("/{id}/update-stock")
+    public ResponseEntity<Void> updateStockQuantity(@PathVariable Long id, @RequestBody int quantity) {
+        bookService.updateStockQuantity(id, quantity);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -1,4 +1,4 @@
 package com.bookstore.dtos;
 
-public class UserDTO {
+public class OrderDTO {
 }
