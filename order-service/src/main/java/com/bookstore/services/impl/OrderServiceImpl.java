@@ -64,4 +64,9 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersByUserId(Long userId) {
         return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
+
+    @Override
+    public List<Order> getOrdersByStatus(OrderStatus status) {
+        return orderRepository.findAllByStatusOrderByCreatedAtDesc(status);
+    }
 }
