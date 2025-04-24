@@ -13,6 +13,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class AddressServiceImpl implements AddressService {
     @Autowired
@@ -62,5 +65,20 @@ public class AddressServiceImpl implements AddressService {
 
         address.setAddress(updateAddressRequest.getNewAddress());
         return addressRepository.save(address);
+    }
+
+    @Override
+    public void deleteAddressById(Long addressId) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new IllegalArgumentException("Address not found with ID: " + addressId));
+        addressRepository.delete(address);
+    }
+
+    @Override
+    public List<AddressDTO> getAddressesByUserId(Long userId) {
+        List<Address> addresses = addressRepository.findByUserId(userId);
+        return addresses.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 }

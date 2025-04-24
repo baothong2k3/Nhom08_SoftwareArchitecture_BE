@@ -16,6 +16,8 @@ public class AddressDTO {
     @NotBlank(message = "Address is required")
     private String address;
 
+    private Long id;
+
     @JsonIgnore
     private UserDTO user;
 }

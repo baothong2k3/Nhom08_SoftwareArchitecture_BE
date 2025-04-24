@@ -133,6 +133,26 @@ public class UserController {
         }
     }
 
+    @GetMapping("/{id}/addresses")
+    @Operation(summary = "Get all addresses of a user", description = "Retrieve all addresses associated with a user")
+    public ResponseEntity<ApiResponse<List<AddressDTO>>> getUserAddresses(@PathVariable Long id) {
+        try {
+            List<AddressDTO> addresses = addressService.getAddressesByUserId(id);
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("SUCCESS")
+                    .message("Addresses fetched successfully")
+                    .response(addresses)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            ApiResponse<List<AddressDTO>> response = ApiResponse.<List<AddressDTO>>builder()
+                    .status("ERROR")
+                    .message("An unexpected error occurred")
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @PostMapping("/update-address")
     @Operation(summary = "Update address of a user", description = "Update an existing address for a user")
     public ResponseEntity<ApiResponse<Address>> updateAddress(@Valid @RequestBody UpdateAddressRequest updateAddressRequest) {
