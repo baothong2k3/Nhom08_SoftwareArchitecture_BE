@@ -1,32 +1,40 @@
 package bookstore.authservice.services.impl;
 
+import bookstore.authservice.entities.Account;
+import bookstore.authservice.repositories.AccountRepository;
 import bookstore.authservice.services.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
-import java.security.Key;
-import io.jsonwebtoken.security.Keys;
+
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class JwtServiceImpl implements JwtService {
+    private final AccountRepository accountRepository;
 
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
+    @Autowired
+    public JwtServiceImpl(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
 
     @Override
     public String generateToken(UserDetails userDetails) {
+        Account account = accountRepository.findByEmail(userDetails.getUsername())
+                .or(() -> accountRepository.findByPhoneNumber(userDetails.getUsername()))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email or phone: " + userDetails.getUsername()));
+
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("userId", account.getId()) // Thêm userId vào claims
                 .claim("role", userDetails.getAuthorities())
                 .setIssuedAt(new Date()) // Thời gian phát hành token
                 .setExpiration(new Date(System.currentTimeMillis() + 30 * 60 * 1000)) // Hết hạn sau 30 phút

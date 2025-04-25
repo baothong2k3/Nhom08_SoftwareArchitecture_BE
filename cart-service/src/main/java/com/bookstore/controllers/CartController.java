@@ -5,7 +5,6 @@ import com.bookstore.services.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -17,8 +16,15 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<CartResponseDTO> addBookToCart(
-            @RequestParam Long userId,
+            @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
+
+        if (userId == null) {
+            System.out.println("UserId is missing or not passed in the header.");
+        } else {
+            System.out.println("User ID: " + userId);
+        }
+
         CartResponseDTO response = cartService.addBookToCart(userId, bookId);
         return ResponseEntity.ok(response);
     }
