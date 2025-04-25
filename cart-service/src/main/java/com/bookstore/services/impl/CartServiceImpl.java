@@ -24,7 +24,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponseDTO addBookToCart(Long userId, Long bookId) {
-        String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
+        String bookServiceUrl = "http://localhost:8080/api/books/" + bookId;
         BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
         if (bookDTO == null || !bookDTO.isStatus()) {
