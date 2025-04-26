@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  config-server:
+    build: ./config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-server/src/main/resources/config:/app/config
+    environment:
+      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=file:/app/config
+    networks:
+      - bookstore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  eureka-server:
+    build: ./eureka_service
+    ports:
+      - "8761:8761"
+    networks:
+      - bookstore-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - bookstore-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "9000:9000"
+    networks:
+      - bookstore-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  user-service:
+    build: ./user_service
+    ports:
+      - "8081:8081"
+    networks:
+      - bookstore-network
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  book-service:
+    build: ./book-service
+    ports:
+      - "8082:8082"
+    networks:
+      - bookstore-network
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  cart-service:
+    build: ./cart-service
+    ports:
+      - "8083:8083"
+    networks:
+      - bookstore-network
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8084:8084"
+    networks:
+      - bookstore-network
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8085:8085"
+    networks:
+      - bookstore-network
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: bookstore_db
+      MYSQL_USER: bookstore
+      MYSQL_PASSWORD: bookstore123
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - bookstore-network
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --max_connections=1000
+      - --wait_timeout=28800
+      - --skip-host-cache
+      - --skip-name-resolve
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=password --execute \"SHOW DATABASES;\""
+      interval: 5s
+      timeout: 20s
+      retries: 10
+      start_period: 100s
+
+volumes:
+  mariadb_data:
+
+networks:
+  bookstore-network:
+    driver: bridge

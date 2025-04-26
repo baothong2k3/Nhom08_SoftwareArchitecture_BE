@@ -1,0 +1,33 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+<<<<<<< HEAD
+
+=======
+  profiles:
+    active: native
+>>>>>>> 70eb395 (create docker)
+  cloud:
+    config:
+      server:
+        native:
+<<<<<<< HEAD
+          search-locations: classpath:/config
+=======
+          search-locations: file:/app/config
+        bootstrap: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+>>>>>>> 70eb395 (create docker)
