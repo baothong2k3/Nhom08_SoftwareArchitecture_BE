@@ -48,6 +48,7 @@ public class SecurityConfig {
                             var response = exchange.getResponse();
                             response.setStatusCode(HttpStatus.UNAUTHORIZED);
                             response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
                             String errorJson = "{\"error\":\"Vui lòng đăng nhập để truy cập\"}";
                             byte[] bytes = errorJson.getBytes(StandardCharsets.UTF_8);
 
@@ -68,6 +69,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

@@ -115,7 +115,9 @@ public class JWTGlobalFilter implements WebFilter {
         }
 
         // Yêu cầu token cho các endpoint bảo mật
+
         if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/")) {
+
             String token = extractJwtFromRequest(exchange);
 
             // Kiểm tra token có tồn tại không

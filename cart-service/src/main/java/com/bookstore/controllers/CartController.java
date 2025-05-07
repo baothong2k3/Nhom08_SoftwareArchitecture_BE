@@ -18,7 +18,6 @@ public class CartController {
     public ResponseEntity<CartResponseDTO> addBookToCart(
             @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
-
         CartResponseDTO response = cartService.addBookToCart(userId, bookId);
         return ResponseEntity.ok(response);
     }
