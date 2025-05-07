@@ -17,10 +17,10 @@ import java.util.Set;
 @ToString
 @Builder
 public class SignUpRequest {
-    @NotBlank(message = "Password is required!")
-    @Size(min = 8, message = "Password must have at least 8 characters!")
+    @NotBlank(message = "Mật khẩu là băt buộc!")
+    @Size(min = 8, message = "Mật khẩu phải có ít nhất 8 kí tự!")
     @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
+            message = "Mật khẩu phải chứa ít nhất một chữ cái thường, một chữ cái in hoa, một chữ số và một ký tự đặc biệt.")
     private String password;
 
 

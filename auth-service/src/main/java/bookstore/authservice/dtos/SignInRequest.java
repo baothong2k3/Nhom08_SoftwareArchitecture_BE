@@ -13,10 +13,10 @@ import lombok.*;
 @ToString
 @Builder
 public class SignInRequest {
-    @NotBlank(message = "Password is required!")
+    @NotBlank(message = "Mật khẩu là bắt buộc!")
     private String password;
 
-    @NotBlank(message = "Username is required!")
+    @NotBlank(message = "Tên đăng nhập là bắt buộc!")
     private String username;
 
 }
