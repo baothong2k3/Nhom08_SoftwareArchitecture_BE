@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -97,6 +98,10 @@ public class JWTGlobalFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+            return chain.filter(exchange);
+        }
+
         String path = exchange.getRequest().getURI().getPath();
         log.info("Processing request for path: {}", path);
 
@@ -110,7 +115,9 @@ public class JWTGlobalFilter implements WebFilter {
         }
 
         // Yêu cầu token cho các endpoint bảo mật
-        if (path.startsWith("/api/cart/") || path.startsWith("/orders/") || path.startsWith("/customers/")) {
+
+        if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/")) {
+
             String token = extractJwtFromRequest(exchange);
 
             // Kiểm tra token có tồn tại không

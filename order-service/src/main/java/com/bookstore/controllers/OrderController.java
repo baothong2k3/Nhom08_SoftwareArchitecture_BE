@@ -7,6 +7,8 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,30 +27,44 @@ public class OrderController {
     private RestTemplate restTemplate;
 
     @PostMapping("/place")
-    public ResponseEntity<Order> placeOrder(@RequestParam Long userId) {
-        // Lấy danh sách sách trong giỏ hàng từ cart-service
-        String cartServiceUrl = "http://localhost:8004/api/cart/all?userId=" + userId;
+    public ResponseEntity<Order> placeOrder(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("UserId") Long userId) {
+
+        // 1. Gọi đến cart-service để lấy danh sách giỏ hàng
+        String cartServiceUrl = "http://localhost:8080/api/cart/all";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", auth); // Gắn token từ API Gateway
+        headers.set("UserId", userId.toString()); // Gắn userId (nếu cart-service cần)
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
         ResponseEntity<List<CartResponseDTO>> response = restTemplate.exchange(
                 cartServiceUrl,
                 HttpMethod.GET,
-                null,
+                entity,
                 new ParameterizedTypeReference<List<CartResponseDTO>>() {}
         );
+
         List<CartResponseDTO> cartItems = response.getBody();
 
         if (cartItems == null || cartItems.isEmpty()) {
             return ResponseEntity.badRequest().build(); // Giỏ hàng trống
         }
 
-        // Tạo đơn hàng
+        // 2. Tạo đơn hàng
         Order order = orderService.createOrder(userId, cartItems);
 
-        // Xóa giỏ hàng của user trong cart-service
-        String clearCartUrl = "http://localhost:8004/api/cart/clear?userId=" + userId;
-        restTemplate.delete(clearCartUrl);
+        // 3. Gọi đến cart-service để xóa giỏ hàng
+        String clearCartUrl = "http://localhost:8080/api/cart/clear";
+        HttpEntity<Void> clearEntity = new HttpEntity<>(headers); // Reuse token & userId
+        restTemplate.exchange(clearCartUrl, HttpMethod.DELETE, clearEntity, Void.class);
 
+        // 4. Trả về đơn hàng
         return ResponseEntity.ok(order);
     }
+
 
     @GetMapping("/user")
     public ResponseEntity<List<Order>> getOrdersByUser(@RequestParam Long userId) {

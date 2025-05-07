@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers(PUBLIC_PATHS).permitAll()
-                        .pathMatchers("/api/cart/**", "/orders/**", "/customers/**").authenticated()
+                        .pathMatchers("/api/cart/**", "/api/orders/**", "/customers/**").authenticated()
                         .anyExchange().permitAll()
                 )
                 // Quan trọng: Sử dụng NoOpServerSecurityContextRepository để không lưu context (stateless JWT)
@@ -63,10 +63,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:5500", "http://127.0.0.1:5500"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+
+        // Sử dụng setAllowedOrigins thay vì setAllowedOriginPatterns
+        config.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
