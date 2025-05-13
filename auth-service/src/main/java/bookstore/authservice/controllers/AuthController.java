@@ -1,9 +1,6 @@
 package bookstore.authservice.controllers;
 
-import bookstore.authservice.dtos.ChangePasswordRequest;
-import bookstore.authservice.dtos.SendOtpRequest;
-import bookstore.authservice.dtos.SignInRequest;
-import bookstore.authservice.dtos.SignUpRequest;
+import bookstore.authservice.dtos.*;
 import bookstore.authservice.services.AccountService;
 import bookstore.authservice.services.OtpService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,22 +49,10 @@ public class AuthController {
                             (existing, replacement) -> existing, // Giữ lỗi đầu tiên nếu có trùng key
                             LinkedHashMap::new
                     ));
-
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("errors", errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-
-        if (accountService.existsByPhoneNumber(signUpRequest.getPhoneNumber())) {
-            response.put("status", HttpStatus.BAD_REQUEST.value());
-            response.put("errors", Map.of("phoneNumber", "Số điện thoại đã tồn tại!"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-
-        if (!otpService.verifyOtp(signUpRequest.getPhoneNumber(), signUpRequest.getOtp())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mã xác thực không hợp lệ!");
-        }
-
         try {
             ResponseEntity<?> result = accountService.signUp(signUpRequest);
             saveUserInformation(signUpRequest);
@@ -84,10 +69,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Gửi thông tin người dùng đến API user save
-     * @param signUpRequest
-     */
     private void saveUserInformation(SignUpRequest signUpRequest) {
         try {
             String saveUserUrl = "http://localhost:8001/api/user/save";
@@ -118,7 +99,6 @@ public class AuthController {
             System.err.println("Error while saving user information: " + ex.getMessage());
         }
     }
-
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signInUser(@RequestBody @Valid SignInRequest signInRequest, BindingResult bindingResult){
@@ -167,7 +147,7 @@ public class AuthController {
 
         if (accountService.existsByPhoneNumber(request.getPhoneNumber())) {
             response.put("status", HttpStatus.BAD_REQUEST.value());
-            response.put("errors", Map.of("phoneNumber", "Phone number already exists!"));
+            response.put("errors", Map.of("phoneNumber", "Số điện thoại đã được đăng ký!"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
@@ -179,9 +159,8 @@ public class AuthController {
                 response.put("error", otpStatus);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
             response.put("status", HttpStatus.OK.value());
-            response.put("message", "OTP sent successfully!");
+            response.put("message", "OTP đã được gửi thành công!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -190,16 +169,34 @@ public class AuthController {
         }
     }
 
-    /**
-     * Gửi lại OTP đến số điện thoại
-     * @param phoneNumber
-     * @return
-     */
-    @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestParam String phoneNumber) {
-        otpService.generateOtp(phoneNumber);
-        return ResponseEntity.ok("OTP resent successfully!");
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody @Valid VerifyOTPRequest request, BindingResult bindingResult) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            error -> error.getField(),
+                            error -> error.getDefaultMessage(),
+                            (existing, replacement) -> existing,
+                            LinkedHashMap::new
+                    ));
+
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("errors", errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        try {
+            String verificationResult = otpService.verifyOtp(request.getPhoneNumber(), request.getOtpCode());
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", verificationResult);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("error", "Lỗi khi xác thực OTP: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
+
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequest request, BindingResult bindingResult) {
         Map<String, Object> response = new LinkedHashMap<>();

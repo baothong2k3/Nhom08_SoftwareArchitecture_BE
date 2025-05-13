@@ -9,19 +9,25 @@ import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class OtpServiceImpl implements OtpService {
-    @Value("${twilio.accountSid}")
+    @Value("#{systemEnvironment['twilio.accountSid']}")
     private String accountSid;
 
-    @Value("${twilio.authToken}")
+    @Value("#{systemEnvironment['twilio.authToken']}")
     private String authToken;
 
-    @Value("${twilio.serviceId}") // ID của Twilio Verify Service
+    @Value("#{systemEnvironment['twilio.serviceId']}")
     private String serviceId;
 
-    @Value("${spring.profiles.active:}")
+    @Value("#{systemEnvironment['spring.profiles.active']}")
     private String activeProfile;
+
+    // Lưu thời điểm gửi OTP
+    private final ConcurrentHashMap<String, Instant> otpSendTimestamps = new ConcurrentHashMap<>();
 
 
     @PostConstruct
@@ -35,22 +41,18 @@ public class OtpServiceImpl implements OtpService {
     public String generateOtp(String phoneNumber) {
         try {
             String formattedPhoneNumber = normalizePhoneNumber(phoneNumber);
-            System.out.println("Sending OTP to: " + formattedPhoneNumber);
-            // Nếu đang chạy trong môi trường "dev", trả về OTP mặc định
-            if ("dev".equals(activeProfile)) {
-                System.out.println("[DEV MODE] OTP for " + formattedPhoneNumber + " is 123456");
-                return "OTP sent successfully! (DEV MODE: 123456)";
+            if ("dev".equals(activeProfile) || !"+84934185833".equals(formattedPhoneNumber)) {
+                return "OTP sent successfully! (DEV MODE or fallback: 123456)";
             }
-
             // Gửi OTP qua Twilio Verify Service
             Verification verification = Verification.creator(
                     serviceId,
                     formattedPhoneNumber,
                     "sms"
             ).create();
-
             // Kiểm tra trạng thái của yêu cầu gửi OTP
             if ("pending".equals(verification.getStatus())) {
+                otpSendTimestamps.put(formattedPhoneNumber, Instant.now());
                 return "OTP sent successfully!";
             } else {
                 return "Failed to send OTP: " + verification.getStatus();
@@ -73,29 +75,45 @@ public class OtpServiceImpl implements OtpService {
         throw new IllegalArgumentException("Invalid phone number format: " + phoneNumber);
     }
 
+    /**
+     * Xác thực OTP
+     * @param phoneNumber
+     * @param otp
+     * @return
+     */
     @Override
-    public boolean verifyOtp(String phoneNumber, String otp) {
+    public String verifyOtp(String phoneNumber, String otp) {
         try {
             String formattedPhoneNumber = normalizePhoneNumber(phoneNumber);
-
             // Nếu đang chạy trong môi trường "dev", OTP mặc định là 123456
-            if ("dev".equals(activeProfile)) {
-                return "123456".equals(otp);
+            if ("dev".equals(activeProfile)|| !"+84934185833".equals(formattedPhoneNumber)) {
+                if ("123456".equals(otp)) {
+                    return "OTP hợp lệ!";
+                } else {
+                    return "OTP không đúng!";
+                }
             }
-
+            // Kiểm tra thời gian gửi OTP
+            Instant sentTime = otpSendTimestamps.get(formattedPhoneNumber);
+            if (sentTime == null || Instant.now().isAfter(sentTime.plusSeconds(30))) {
+                return "OTP đã hết hạn!";
+            }
             // Xác thực OTP qua Twilio Verify Service
             VerificationCheck verificationCheck = VerificationCheck.creator(serviceId)
                     .setTo(formattedPhoneNumber)
                     .setCode(otp)
                     .create();
-
-            return "approved".equals(verificationCheck.getStatus());
+            // Kiểm tra trạng thái của yêu cầu xác thực OTP
+            if ("approved".equals(verificationCheck.getStatus())) {
+                otpSendTimestamps.remove(formattedPhoneNumber); // Xóa thời gian gửi OTP sau khi xác thực thành công
+                return "OTP hợp lệ!";
+            } else {
+                return "OTP không đúng!";
+            }
         } catch (ApiException e) {
-            System.err.println("Failed to verify OTP: " + e.getMessage());
-            return false;
+            return "Failed to verify OTP: " + e.getMessage();
         } catch (IllegalArgumentException e) {
-            System.err.println("Invalid phone number: " + e.getMessage());
-            return false;
+            return "Invalid phone number: " + e.getMessage();
         }
     }
 }
