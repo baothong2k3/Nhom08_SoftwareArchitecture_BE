@@ -1,5 +1,6 @@
 package com.bookstore.filters;
 
+import com.bookstore.configs.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -96,6 +97,16 @@ public class JWTGlobalFilter implements WebFilter {
         }
     }
 
+    private boolean isPublicPath(String path) {
+        // Kiểm tra xem đường dẫn có bắt đầu bằng một trong các đường dẫn công khai
+        for (String publicPath : SecurityConstants.PUBLIC_PATHS) {
+            if (path.startsWith(publicPath)) {
+                return true; // Nếu là public path, không cần xác thực
+            }
+        }
+        return false; // Nếu không phải, cần xác thực
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
@@ -105,17 +116,12 @@ public class JWTGlobalFilter implements WebFilter {
         String path = exchange.getRequest().getURI().getPath();
         log.info("Processing request for path: {}", path);
 
-        // Bỏ qua các yêu cầu không cần xác thực
-        if (path.contains("/api/auth/sign-up") ||
-                path.contains("/api/auth/sign-in") ||
-                path.contains("/api/books/paged") ||
-                path.contains("/api/user/save") ||
-                path.matches("^/api/books/\\d+$")) {
-            return chain.filter(exchange);
+        // Sử dụng phương thức isPublicPath để kiểm tra xem đường dẫn có phải là public path không
+        if (isPublicPath(path)) {
+            return chain.filter(exchange); // Nếu là public path, không cần xác thực
         }
 
         // Yêu cầu token cho các endpoint bảo mật
-
         if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/")) {
 
             String token = extractJwtFromRequest(exchange);
@@ -165,7 +171,6 @@ public class JWTGlobalFilter implements WebFilter {
             return chain.filter(exchange.mutate().request(mutatedRequest).build())
                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
         }
-
         // Cho phép yêu cầu đi tiếp nếu không phải endpoint bảo mật
         return chain.filter(exchange);
     }

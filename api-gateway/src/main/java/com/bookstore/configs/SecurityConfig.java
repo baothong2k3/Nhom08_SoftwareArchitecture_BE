@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers(PUBLIC_PATHS).permitAll()
-                        .pathMatchers("/api/cart/**", "/api/orders/**", "/customers/**").authenticated()
+                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**").authenticated()
                         .anyExchange().permitAll()
                 )
                 // Quan trọng: Sử dụng NoOpServerSecurityContextRepository để không lưu context (stateless JWT)
@@ -48,7 +48,6 @@ public class SecurityConfig {
                             var response = exchange.getResponse();
                             response.setStatusCode(HttpStatus.UNAUTHORIZED);
                             response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-
                             String errorJson = "{\"error\":\"Vui lòng đăng nhập để truy cập\"}";
                             byte[] bytes = errorJson.getBytes(StandardCharsets.UTF_8);
 
@@ -66,10 +65,9 @@ public class SecurityConfig {
 
         // Sử dụng setAllowedOrigins thay vì setAllowedOriginPatterns
         config.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
-
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
