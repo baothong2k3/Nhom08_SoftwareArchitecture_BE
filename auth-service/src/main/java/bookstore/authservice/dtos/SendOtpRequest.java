@@ -8,9 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SendOtpRequest {
-    @NotBlank(message = "Phone number is required!")
+    @NotBlank(message = "Số điện thoại là bắt buộc!")
     @Pattern(regexp = "^(0|\\+84)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$",
-            message = "Please input a valid Vietnamese phone number!")
+            message = "Vui lòng nhập số điện thoại phù hợp!")
     private String phoneNumber;
 
 }

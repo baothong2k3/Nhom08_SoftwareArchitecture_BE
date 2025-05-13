@@ -18,26 +18,19 @@ public class CartController {
     public ResponseEntity<CartResponseDTO> addBookToCart(
             @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
-
-        if (userId == null) {
-            System.out.println("UserId is missing or not passed in the header.");
-        } else {
-            System.out.println("User ID: " + userId);
-        }
-
         CartResponseDTO response = cartService.addBookToCart(userId, bookId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<CartResponseDTO>> getAllBooksInCart(@RequestParam Long userId) {
+    public ResponseEntity<List<CartResponseDTO>> getAllBooksInCart(@RequestHeader(value = "UserId") Long userId) {
         List<CartResponseDTO> response = cartService.getAllBooksInCart(userId);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/remove")
     public ResponseEntity<List<CartResponseDTO>> removeBookFromCart(
-            @RequestParam Long userId,
+            @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
         cartService.removeBookFromCart(userId, bookId);
         List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
@@ -45,7 +38,7 @@ public class CartController {
     }
     @PatchMapping("/increase")
     public ResponseEntity<List<CartResponseDTO>> increaseBookQuantity(
-            @RequestParam Long userId,
+            @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
         cartService.increaseBookQuantity(userId, bookId);
         List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
@@ -53,14 +46,14 @@ public class CartController {
     }
     @PatchMapping("/decrease")
     public ResponseEntity<List<CartResponseDTO>> decreaseBookQuantity(
-            @RequestParam Long userId,
+            @RequestHeader(value = "UserId") Long userId,
             @RequestParam Long bookId) {
         cartService.decreaseBookQuantity(userId, bookId);
         List<CartResponseDTO> updatedCart = cartService.getAllBooksInCart(userId);
         return ResponseEntity.ok(updatedCart);
     }
     @DeleteMapping("/clear")
-    public ResponseEntity<Void> clearCart(@RequestParam Long userId) {
+    public ResponseEntity<Void> clearCart(@RequestHeader(value = "UserId") Long userId) {
         cartService.clearCart(userId);
         return ResponseEntity.ok().build();
     }
