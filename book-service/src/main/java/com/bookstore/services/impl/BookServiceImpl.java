@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +30,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Page<BookDTO> getAllBooksPaged(int page, int size) {
-        Page<Book> booksPage = bookRepository.findAll(PageRequest.of(page, size));
+        Page<Book> booksPage = bookRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Order.asc("id"), Sort.Order.asc("title")))
+        );
         return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
     }
 
