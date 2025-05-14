@@ -1,6 +1,8 @@
 package com.bookstore.services;
 
+import com.bookstore.dtos.CartRequestDTO;
 import com.bookstore.dtos.CartResponseDTO;
+import com.bookstore.dtos.OrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
 import com.bookstore.entities.OrderStatus;
@@ -8,7 +10,7 @@ import com.bookstore.entities.OrderStatus;
 import java.util.List;
 
 public interface OrderService {
-    Order createOrder(Long userId, List<CartResponseDTO> cartItems);
+    String createOrder(Long userId, OrderRequestDTO orderRequestDTO, List<CartRequestDTO> cartRequestDTOList);
     List<Order> getOrdersByUserId(Long userId);
     List<Order> getOrdersByStatus(OrderStatus status);
     List<OrderDetail> getOrderDetailsByOrderId(Long orderId);

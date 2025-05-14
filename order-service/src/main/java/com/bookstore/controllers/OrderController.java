@@ -1,20 +1,27 @@
 package com.bookstore.controllers;
 
+import com.bookstore.dtos.CartRequestDTO;
 import com.bookstore.dtos.CartResponseDTO;
+import com.bookstore.dtos.OrderRequestDTO;
+import com.bookstore.dtos.PlaceOrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
 import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -27,47 +34,40 @@ public class OrderController {
     private RestTemplate restTemplate;
 
     @PostMapping("/place")
-    public ResponseEntity<Order> placeOrder(
-            @RequestHeader("Authorization") String auth,
+    public ResponseEntity<?> placeOrder(
+            @Valid @RequestBody PlaceOrderRequestDTO placeOrderRequestDTO,
             @RequestHeader("UserId") Long userId) {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
 
-        // 1. Gọi đến cart-service để lấy danh sách giỏ hàng
-        String cartServiceUrl = "http://localhost:8080/api/cart/all";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", auth); // Gắn token từ API Gateway
-        headers.set("UserId", userId.toString()); // Gắn userId (nếu cart-service cần)
-
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<List<CartResponseDTO>> response = restTemplate.exchange(
-                cartServiceUrl,
-                HttpMethod.GET,
-                entity,
-                new ParameterizedTypeReference<List<CartResponseDTO>>() {}
-        );
-
-        List<CartResponseDTO> cartItems = response.getBody();
-
-        if (cartItems == null || cartItems.isEmpty()) {
-            return ResponseEntity.badRequest().build(); // Giỏ hàng trống
+        if(placeOrderRequestDTO.getOrderRequest() == null) {
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Không có thông tin đơn hàng");
+            return ResponseEntity.badRequest().body(response);
         }
-
-        // 2. Tạo đơn hàng
-        Order order = orderService.createOrder(userId, cartItems);
-
-        // 3. Gọi đến cart-service để xóa giỏ hàng
-        String clearCartUrl = "http://localhost:8080/api/cart/clear";
-        HttpEntity<Void> clearEntity = new HttpEntity<>(headers); // Reuse token & userId
-        restTemplate.exchange(clearCartUrl, HttpMethod.DELETE, clearEntity, Void.class);
-
-        // 4. Trả về đơn hàng
-        return ResponseEntity.ok(order);
+        // Kiểm tra nếu cartRequest là null hoặc rỗng
+        if (placeOrderRequestDTO.getCartRequest() == null || placeOrderRequestDTO.getCartRequest().isEmpty()) {
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Giỏ hàng không có sản phẩm nào");
+            return ResponseEntity.badRequest().body(response);
+        }
+        // Tạo đơn hàng
+        String orderResponse = orderService.createOrder(userId, placeOrderRequestDTO.getOrderRequest(), placeOrderRequestDTO.getCartRequest());
+        // Kiểm tra kết quả trả về từ service
+        if (orderResponse.equals("Đơn hàng đã được tạo thành công")) {
+           response.put("status", HttpStatus.OK.value());
+            response.put("message", orderResponse);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", orderResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
     }
 
 
+
     @GetMapping("/user")
-    public ResponseEntity<List<Order>> getOrdersByUser(@RequestParam Long userId) {
+    public ResponseEntity<List<Order>> getOrdersByUser(@RequestHeader("UserId") Long userId) {
         List<Order> orders = orderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
