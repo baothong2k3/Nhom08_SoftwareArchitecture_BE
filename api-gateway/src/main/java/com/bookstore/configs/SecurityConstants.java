@@ -8,5 +8,8 @@ public class SecurityConstants {
             "/api/auth/verify-otp",
             "/api/auth/forgot-password",
             "/api/books/paged",
+            "/api/books/*/check-stock",
     };
+
+    public static final String[] ADMIN_ONLY_PATHS = { "/user/all" };
 }

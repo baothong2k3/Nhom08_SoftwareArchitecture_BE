@@ -112,13 +112,35 @@ public class JWTGlobalFilter implements WebFilter {
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
             return chain.filter(exchange);
         }
-
         String path = exchange.getRequest().getURI().getPath();
         log.info("Processing request for path: {}", path);
 
         // Sử dụng phương thức isPublicPath để kiểm tra xem đường dẫn có phải là public path không
         if (isPublicPath(path)) {
             return chain.filter(exchange); // Nếu là public path, không cần xác thực
+        }
+
+        if (path.equals("/api/user/all")) {
+            String token = extractJwtFromRequest(exchange);
+            Claims claims = extractClaims(token);
+            if (claims == null) {
+                return handleUnauthorized(exchange, "Token không hợp lệ");
+            }
+            Object roleObj = claims.get("role");
+            boolean isAdmin = false;
+            if (roleObj instanceof List) {
+                List<?> roleList = (List<?>) roleObj;
+                if (!roleList.isEmpty()) {
+                    Object firstRole = roleList.get(0);
+                    if (firstRole instanceof Map) {
+                        Object authority = ((Map<?, ?>) firstRole).get("authority");
+                        isAdmin = "ROLE_ADMIN".equals(authority);
+                    }
+                }
+            }
+            if (!isAdmin) {
+                return handleUnauthorized(exchange, "Bạn không có quyền truy cập tài nguyên này");
+            }
         }
 
         // Yêu cầu token cho các endpoint bảo mật

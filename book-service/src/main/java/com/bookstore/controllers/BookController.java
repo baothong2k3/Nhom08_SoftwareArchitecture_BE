@@ -93,4 +93,16 @@ public class BookController {
         bookService.updateStockQuantity(id, quantity);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}/check-stock")
+    public ResponseEntity<Boolean> checkStockAvailability(@PathVariable Long id, @RequestParam int requestedQuantity) {
+        try {
+            boolean isAvailable = bookService.isStockAvailable(id, requestedQuantity);
+            return ResponseEntity.ok(isAvailable);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
+
+
 }

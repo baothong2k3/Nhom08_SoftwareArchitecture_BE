@@ -143,4 +143,13 @@ public class BookServiceImpl implements BookService {
             }
         });
     }
+
+    @Override
+    public boolean isStockAvailable(Long bookId, int quantity) {
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book != null) {
+            return book.getStockQuantity() >= quantity;
+        }
+        return false;
+    }
 }
