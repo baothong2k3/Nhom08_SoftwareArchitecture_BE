@@ -18,10 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -36,6 +33,7 @@ public class OrderController {
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(
             @Valid @RequestBody PlaceOrderRequestDTO placeOrderRequestDTO,
+            @RequestHeader("Authorization") String auth,
             @RequestHeader("UserId") Long userId) {
         Map<String, Object> response = new LinkedHashMap<String, Object>();
 
@@ -54,14 +52,41 @@ public class OrderController {
         String orderResponse = orderService.createOrder(userId, placeOrderRequestDTO.getOrderRequest(), placeOrderRequestDTO.getCartRequest());
         // Kiểm tra kết quả trả về từ service
         if (orderResponse.equals("Đơn hàng đã được tạo thành công")) {
-           response.put("status", HttpStatus.OK.value());
-            response.put("message", orderResponse);
-            return ResponseEntity.ok(response);
+            List<Long> cartIds = new ArrayList<>();
+            for (CartRequestDTO cart : placeOrderRequestDTO.getCartRequest()) {
+                if (cart.getCartId() != null) {
+                    cartIds.add(cart.getCartId());
+                }
+            }
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Authorization", auth);
+                headers.set("UserId", userId.toString());
+                String clearCartUrl = "http://localhost:8080/api/cart/remove-multiple";
+                HttpEntity<List<Long>> clearEntity = new HttpEntity<>(cartIds, headers);
+                ResponseEntity<Boolean> cartClearResponse = restTemplate.exchange(
+                        clearCartUrl,
+                        HttpMethod.DELETE,
+                        clearEntity,
+                        Boolean.class
+                );
+                if (!Boolean.TRUE.equals(cartClearResponse.getBody())) {
+                    response.put("status", HttpStatus.BAD_REQUEST.value());
+                    response.put("message", "Không thể xóa giỏ hàng sau khi đặt hàng");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                }
+                response.put("status", HttpStatus.OK.value());
+                response.put("message", orderResponse);
+                return ResponseEntity.ok(response);
+            } catch (Exception e) {
+                System.err.println("Lỗi khi gọi cart-service để xóa giỏ hàng: " + e.getMessage());
+            }
         } else {
             response.put("status", HttpStatus.BAD_REQUEST.value());
             response.put("message", orderResponse);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
 
@@ -90,4 +115,11 @@ public class OrderController {
         Order updatedOrder = orderService.updateOrderStatus(orderId, newStatus);
         return ResponseEntity.ok(updatedOrder);
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Order>> getAllOrders() {
+        List<Order> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
+    }
+
 }

@@ -120,7 +120,7 @@ public class JWTGlobalFilter implements WebFilter {
             return chain.filter(exchange); // Nếu là public path, không cần xác thực
         }
 
-        if (path.equals("/api/user/all")) {
+        if (path.equals("/api/user/all") || path.equals("/api/orders/all")) {
             String token = extractJwtFromRequest(exchange);
             Claims claims = extractClaims(token);
             if (claims == null) {

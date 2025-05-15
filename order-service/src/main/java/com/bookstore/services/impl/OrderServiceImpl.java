@@ -9,6 +9,7 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.repositories.OrderRepository;
 import com.bookstore.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -128,4 +129,9 @@ public class OrderServiceImpl implements OrderService {
                 return false;
         }
     }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
 }

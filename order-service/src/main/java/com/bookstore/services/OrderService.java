@@ -1,7 +1,6 @@
 package com.bookstore.services;
 
 import com.bookstore.dtos.CartRequestDTO;
-import com.bookstore.dtos.CartResponseDTO;
 import com.bookstore.dtos.OrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
@@ -15,4 +14,5 @@ public interface OrderService {
     List<Order> getOrdersByStatus(OrderStatus status);
     List<OrderDetail> getOrderDetailsByOrderId(Long orderId);
     Order updateOrderStatus(Long orderId, OrderStatus newStatus);
+    List<Order> getAllOrders();
 }
