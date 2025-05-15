@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const { sequelize, testConnection } = require("./config/database");
+const routes = require("./routes");
 
 // Khởi tạo Express app
 const app = express();
@@ -48,6 +49,9 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Đăng ký routes API
+app.use("/api", routes);
 
 // Health check endpoint cho service registry
 app.get("/health", (req, res) => {

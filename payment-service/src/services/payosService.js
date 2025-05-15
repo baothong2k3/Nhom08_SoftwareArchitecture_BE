@@ -59,9 +59,13 @@ const createPaymentRequest = async (orderInfo) => {
   try {
     console.log("Thông tin nhận được:", JSON.stringify(orderInfo, null, 2));
 
-    // Kiểm tra customerInfo
+    // Nếu không có customerInfo, tạo mặc định
     if (!orderInfo.customerInfo) {
-      throw new Error("Thiếu customerInfo trong orderInfo");
+      orderInfo.customerInfo = {
+        fullName: orderInfo.customerName || "Khách hàng",
+        email: orderInfo.customerEmail || "guest@example.com",
+        phone: orderInfo.customerPhone || "0000000000",
+      };
     }
 
     // Xử lý orderCode thành số nguyên (nếu có tiền tố ORDER-)

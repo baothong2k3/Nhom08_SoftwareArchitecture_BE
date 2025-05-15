@@ -42,9 +42,10 @@ const sequelize = new Sequelize(DATABASE_NAME, DB_USER, DB_PASS, {
   host: DB_HOST,
   port: DB_PORT,
   dialect: "mariadb",
-  dialectOptions: {
-    timezone: "Asia/Ho_Chi_Minh",
-  },
+  // Xóa hoặc thay đổi timezone để khắc phục lỗi
+  // dialectOptions: {
+  //   timezone: "Asia/Ho_Chi_Minh",
+  // },
   pool: {
     max: 5,
     min: 0,
