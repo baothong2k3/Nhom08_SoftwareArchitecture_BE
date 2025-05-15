@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers(PUBLIC_PATHS).permitAll()
-                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**").authenticated()
+                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**","/api/user/get","/api/user/add-address").authenticated()
                         .anyExchange().permitAll()
                 )
                 // Quan trọng: Sử dụng NoOpServerSecurityContextRepository để không lưu context (stateless JWT)
