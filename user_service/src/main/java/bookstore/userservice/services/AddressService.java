@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface AddressService {
     public AddressDTO save(AddressDTO addressDTO);
-    public Address addAddress(AddressRequest addressRequest);
+    public Address addAddress(Long userId,String address);
     Address updateAddress(UpdateAddressRequest updateAddressRequest);
     void deleteAddressById(Long addressId);
     List<AddressDTO> getAddressesByUserId(Long userId);
