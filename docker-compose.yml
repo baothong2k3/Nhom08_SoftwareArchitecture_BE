@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   config-server:
@@ -153,6 +153,40 @@ services:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8989:8989"
+    networks:
+      - bookstore-network
+    depends_on:
+      - mariadb
+    environment:
+      - PORT=8989
+      - NODE_ENV=development
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_NAME=payment-service-bookstore
+      - DB_USER=root
+      - DB_PASS=password
+      - JWT_SECRET=5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
+      - ORDER_SERVICE_URL=http://order-service:8084
+      - CART_SERVICE_URL=http://cart-service:8083
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8989/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   mariadb:
     image: mariadb:latest
     environment:
@@ -168,7 +202,7 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - bookstore-network
-    command: 
+    command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
@@ -177,7 +211,7 @@ services:
       - --skip-host-cache
       - --skip-name-resolve
     healthcheck:
-      test: "/usr/bin/mysql --user=root --password=password --execute \"SHOW DATABASES;\""
+      test: '/usr/bin/mysql --user=root --password=password --execute "SHOW DATABASES;"'
       interval: 5s
       timeout: 20s
       retries: 10
