@@ -86,17 +86,16 @@ app.use((req, res) => {
 
 // Khởi động server sau khi kết nối database
 (async () => {
-  const dbInitialized = await initializeDatabase();
+  try {
+    console.log("Đang khởi tạo kết nối database...");
+    await testConnection();
 
-  if (!dbInitialized) {
-    console.error(
-      "Không thể khởi động server do lỗi database. Vui lòng kiểm tra cấu hình và thử lại."
-    );
+    app.listen(PORT, () => {
+      console.log(`Payment service đang chạy trên cổng ${PORT}`);
+      console.log(`Kiểm tra API tại http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Không thể khởi động server do lỗi database:", error);
     process.exit(1);
   }
-
-  app.listen(PORT, () => {
-    console.log(`Payment service đang chạy trên cổng ${PORT}`);
-    console.log(`Kiểm tra API tại http://localhost:${PORT}`);
-  });
 })();
