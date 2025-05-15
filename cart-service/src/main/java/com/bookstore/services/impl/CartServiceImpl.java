@@ -136,4 +136,12 @@ public class CartServiceImpl implements CartService {
         List<Cart> cartItems = cartRepository.findByUserId(userId);
         cartRepository.deleteAll(cartItems);
     }
+
+    @Override
+    public void removeMultipleBooksFromCart(Long userId, List<Long> cartIds) {
+        List<Cart> cartsToDelete = cartRepository.findAllById(cartIds).stream()
+                .filter(cart -> cart.getUserId().equals(userId))
+                .collect(Collectors.toList());
+        cartRepository.deleteAll(cartsToDelete);
+    }
 }

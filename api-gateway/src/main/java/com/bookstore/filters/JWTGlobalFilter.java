@@ -1,5 +1,6 @@
 package com.bookstore.filters;
 
+import com.bookstore.configs.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -96,26 +97,53 @@ public class JWTGlobalFilter implements WebFilter {
         }
     }
 
+    private boolean isPublicPath(String path) {
+        // Kiểm tra xem đường dẫn có bắt đầu bằng một trong các đường dẫn công khai
+        for (String publicPath : SecurityConstants.PUBLIC_PATHS) {
+            if (path.startsWith(publicPath)) {
+                return true; // Nếu là public path, không cần xác thực
+            }
+        }
+        return false; // Nếu không phải, cần xác thực
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
             return chain.filter(exchange);
         }
-
         String path = exchange.getRequest().getURI().getPath();
         log.info("Processing request for path: {}", path);
 
-        // Bỏ qua các yêu cầu không cần xác thực
-        if (path.contains("/api/auth/sign-up") ||
-                path.contains("/api/auth/sign-in") ||
-                path.contains("/api/books/paged") ||
-                path.contains("/api/user/save") ||
-                path.matches("^/api/books/\\d+$")) {
-            return chain.filter(exchange);
+        // Sử dụng phương thức isPublicPath để kiểm tra xem đường dẫn có phải là public path không
+        if (isPublicPath(path)) {
+            return chain.filter(exchange); // Nếu là public path, không cần xác thực
+        }
+
+        if (path.equals("/api/user/all") || path.equals("/api/orders/all")) {
+            String token = extractJwtFromRequest(exchange);
+            Claims claims = extractClaims(token);
+            if (claims == null) {
+                return handleUnauthorized(exchange, "Token không hợp lệ");
+            }
+            Object roleObj = claims.get("role");
+            boolean isAdmin = false;
+            if (roleObj instanceof List) {
+                List<?> roleList = (List<?>) roleObj;
+                if (!roleList.isEmpty()) {
+                    Object firstRole = roleList.get(0);
+                    if (firstRole instanceof Map) {
+                        Object authority = ((Map<?, ?>) firstRole).get("authority");
+                        isAdmin = "ROLE_ADMIN".equals(authority);
+                    }
+                }
+            }
+            if (!isAdmin) {
+                return handleUnauthorized(exchange, "Bạn không có quyền truy cập tài nguyên này");
+            }
         }
 
         // Yêu cầu token cho các endpoint bảo mật
-
         if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/")) {
 
             String token = extractJwtFromRequest(exchange);
@@ -165,7 +193,6 @@ public class JWTGlobalFilter implements WebFilter {
             return chain.filter(exchange.mutate().request(mutatedRequest).build())
                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
         }
-
         // Cho phép yêu cầu đi tiếp nếu không phải endpoint bảo mật
         return chain.filter(exchange);
     }
