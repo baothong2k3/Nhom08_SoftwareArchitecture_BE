@@ -1,0 +1,33 @@
+server:
+<<<<<<< HEAD
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/auth_db
+    username: root
+    password: password
+=======
+  port: 9000
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:mariadb://mariadb:3306/bookstore_db?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: password
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    show-sql: true
+    
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+>>>>>>> 70eb395 (create docker)

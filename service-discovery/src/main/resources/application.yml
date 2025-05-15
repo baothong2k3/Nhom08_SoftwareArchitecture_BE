@@ -1,0 +1,13 @@
+server:
+  port: 8761  # Cổng mặc định của Eureka Server
+
+spring:
+  application:
+    name: service-discovery  # Tên service
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false
+    fetch-registry: false
