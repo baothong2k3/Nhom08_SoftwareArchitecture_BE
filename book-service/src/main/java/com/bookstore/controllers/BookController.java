@@ -105,4 +105,9 @@ public class BookController {
     }
 
 
+    @PatchMapping("/{id}/increase-stock")
+    public ResponseEntity<Void> increase(@PathVariable Long id, @RequestBody int quantity) {
+        bookService.increaseStock(id, quantity);
+        return ResponseEntity.ok().build();
+    }
 }

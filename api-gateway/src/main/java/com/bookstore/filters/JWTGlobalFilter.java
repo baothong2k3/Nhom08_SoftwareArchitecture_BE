@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -39,6 +40,7 @@ public class JWTGlobalFilter implements WebFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JWTGlobalFilter.class);
     private static final String SECRET_KEY = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // Phương thức trích xuất và xử lý token vẫn giữ nguyên
     private String extractJwtFromRequest(ServerWebExchange exchange) {
@@ -107,6 +109,15 @@ public class JWTGlobalFilter implements WebFilter {
         return false; // Nếu không phải, cần xác thực
     }
 
+    private boolean isTokenPath(String path) {
+        for (String tokenPath : SecurityConstants.TOKEN_PATHS) {
+            if (pathMatcher.match(tokenPath, path)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
@@ -145,12 +156,9 @@ public class JWTGlobalFilter implements WebFilter {
 
 
         // Yêu cầu token cho các endpoint bảo mật
-        if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/") || path.startsWith("/api/user/get")
-            || path.startsWith("/api/user/add-address") || path.startsWith("/api/orders/*/details") || path.startsWith("/api/user/update")
-        ) {
-
+        if (isTokenPath(path)) {
+            System.out.println("Đường dẫn yêu cầu token: " + path);
             String token = extractJwtFromRequest(exchange);
-
             // Kiểm tra token có tồn tại không
             if (token == null) {
                 return handleUnauthorized(exchange, "Vui lòng đăng nhập để thực hiện hành động này");

@@ -122,6 +122,63 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("UserId") Long userId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Order order = orderService.getOrderById(orderId);
+            if (order == null) {
+                response.put("status", HttpStatus.NOT_FOUND.value());
+                response.put("message", "Không tìm thấy đơn hàng");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            if (!order.getUserId().equals(userId)) {
+                response.put("status", HttpStatus.NOT_FOUND.value());
+                response.put("message", "Không tìm thấy đơn hàng");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            if (order.getStatus() == OrderStatus.PLACED || order.getStatus() == OrderStatus.CONFIRMED) {
+                Order canceledOrder = orderService.updateOrderStatus(orderId, OrderStatus.CANCELED);
+                // Gọi tăng lại stock cho từng sản phẩm trong order
+                for (OrderDetail detail : canceledOrder.getOrderDetails()) {
+                    try {
+                        Long bookId = detail.getBookId();
+                        int quantity = detail.getQuantity();
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        headers.set("Authorization", auth);
+
+                        String url = "http://localhost:8080/api/books/" + bookId + "/increase-stock";
+                        HttpEntity<Integer> request = new HttpEntity<>(quantity, headers);
+                        ResponseEntity<Void> bookResponse = new RestTemplate().exchange(
+                                url,
+                                HttpMethod.PATCH,
+                                request,
+                                Void.class
+                        );
+                        System.out.println("Đã tăng lại số lượng cho sách ID " + bookId + ", status: " + bookResponse.getStatusCode());
+                    } catch (Exception e) {
+                        System.err.println("Lỗi khi gọi tăng stock: " + e.getMessage());
+                    }
+                }
+                response.put("status", HttpStatus.OK.value());
+                response.put("message", "Đơn hàng đã được huỷ thành công và số lượng sách đã được hoàn lại");
+                response.put("order", canceledOrder);
+                return ResponseEntity.ok(response);
+            }
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Không thể huỷ đơn hàng ở trạng thái hiện tại");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "Lỗi khi huỷ đơn hàng: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
 
 }
