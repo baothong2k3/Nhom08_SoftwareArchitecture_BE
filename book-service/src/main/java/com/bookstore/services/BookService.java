@@ -18,4 +18,5 @@ public interface BookService {
     boolean isStockAvailable(Long bookId, int quantity);
     void increaseStock(Long id, int quantity);
     List<BookDTO> searchBooks(String keyword);
+    List<String> getAllCategories();
 }

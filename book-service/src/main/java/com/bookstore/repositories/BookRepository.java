@@ -16,4 +16,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT b FROM Book b WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Book> searchBooksByTitleOrAuthor(String keyword);
+
+    @Query("SELECT DISTINCT b.category FROM Book b")
+    List<String> findDistinctCategories();
 }

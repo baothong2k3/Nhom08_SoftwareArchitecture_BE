@@ -169,4 +169,9 @@ public class BookServiceImpl implements BookService {
                 .map(book -> modelMapper.map(book, BookDTO.class))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<String> getAllCategories() {
+        return bookRepository.findDistinctCategories();
+    }
 }

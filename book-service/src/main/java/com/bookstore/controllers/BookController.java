@@ -116,4 +116,10 @@ public class BookController {
         List<BookDTO> books = bookService.searchBooks(keyword);
         return ResponseEntity.ok(books);
     }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAllCategories() {
+        List<String> categories = bookService.getAllCategories();
+        return ResponseEntity.ok(categories);
+    }
 }
