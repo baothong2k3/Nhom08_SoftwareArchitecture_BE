@@ -14,8 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -141,6 +145,37 @@ public class OrderServiceImpl implements OrderService {
 
     public Order getOrderById(Long id) {
         return orderRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSellingBooks(LocalDate startDate, LocalDate endDate) {
+        List<Order> orders;
+
+        if (startDate != null && endDate != null) {
+            orders = orderRepository.findAllByStatusAndCreatedAtBetween(OrderStatus.DELIVERED, startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        } else {
+            orders = orderRepository.findAllByStatus(OrderStatus.DELIVERED);
+        }
+
+        Map<Long, Map<String, Object>> bookSales = new HashMap<>();
+        for (Order order : orders) {
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Long bookId = detail.getBookId();
+                bookSales.putIfAbsent(bookId, new HashMap<>());
+                Map<String, Object> bookStat = bookSales.get(bookId);
+
+                bookStat.put("bookId", bookId);
+                bookStat.put("bookTitle", detail.getBookTitle());
+                bookStat.put("quantitySold", (int) bookStat.getOrDefault("quantitySold", 0) + detail.getQuantity());
+                bookStat.put("totalPrice", ((BigDecimal) bookStat.getOrDefault("totalPrice", BigDecimal.ZERO))
+                        .add(detail.getTotalPrice()));
+            }
+        }
+
+        return bookSales.values().stream()
+                .sorted((b1, b2) -> ((Integer) b2.get("quantitySold")).compareTo((Integer) b1.get("quantitySold")))
+                .limit(10)
+                .collect(Collectors.toList());
     }
 
 }
