@@ -206,4 +206,32 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Map<String, Object>> getYearlyRevenue(int startYear, int endYear) {
+        List<Order> orders = orderRepository.findAllByStatusAndYearRange(OrderStatus.DELIVERED, startYear, endYear);
+
+        // Initialize revenue for all years in the range with 0
+        Map<Integer, BigDecimal> revenueByYear = new HashMap<>();
+        for (int year = startYear; year <= endYear; year++) {
+            revenueByYear.put(year, BigDecimal.ZERO);
+        }
+
+        // Calculate revenue for years with orders
+        for (Order order : orders) {
+            int year = order.getCreatedAt().getYear();
+            revenueByYear.put(year, revenueByYear.get(year).add(order.getTotalPrice()));
+        }
+
+        // Convert to list of maps
+        return revenueByYear.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> yearRevenue = new HashMap<>();
+                    yearRevenue.put("year", entry.getKey());
+                    yearRevenue.put("revenue", entry.getValue());
+                    return yearRevenue;
+                })
+                .sorted((y1, y2) -> Integer.compare((int) y1.get("year"), (int) y2.get("year")))
+                .collect(Collectors.toList());
+    }
+
 }

@@ -47,4 +47,12 @@ public class StatisticController {
         List<Map<String, Object>> monthlyRevenue = orderService.getMonthlyRevenue(year);
         return ResponseEntity.ok(monthlyRevenue);
     }
+
+    @GetMapping("/yearly-revenue")
+    public ResponseEntity<List<Map<String, Object>>> getYearlyRevenue(
+            @RequestParam int startYear,
+            @RequestParam int endYear) {
+        List<Map<String, Object>> yearlyRevenue = orderService.getYearlyRevenue(startYear, endYear);
+        return ResponseEntity.ok(yearlyRevenue);
+    }
 }
