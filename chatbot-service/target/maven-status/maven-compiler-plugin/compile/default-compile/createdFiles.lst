@@ -1,0 +1,6 @@
+com\bookstore\chatbot\ChatbotServiceApplication.class
+com\bookstore\chatbot\model\ChatMessage.class
+com\bookstore\chatbot\model\ChatMessage$MessageType.class
+com\bookstore\chatbot\config\BookServiceClient.class
+com\bookstore\chatbot\service\ChatbotService.class
+com\bookstore\chatbot\controller\ChatbotController.class

@@ -95,8 +95,10 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - config-server
-      - eureka-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -108,8 +110,10 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - config-server
-      - eureka-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -121,8 +125,10 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - config-server
-      - eureka-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -134,8 +140,10 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - config-server
-      - eureka-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -147,8 +155,10 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - config-server
-      - eureka-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -160,7 +170,8 @@ services:
     networks:
       - bookstore-network
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     environment:
       - PORT=8989
       - NODE_ENV=development
@@ -187,6 +198,21 @@ services:
       retries: 5
       start_period: 30s
 
+  chatbot-service:
+    build: ./chatbot-service
+    ports:
+      - "8086:8086"
+    networks:
+      - bookstore-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
   mariadb:
     image: mariadb:latest
     environment:
@@ -211,11 +237,12 @@ services:
       - --skip-host-cache
       - --skip-name-resolve
     healthcheck:
-      test: '/usr/bin/mysql --user=root --password=password --execute "SHOW DATABASES;"'
-      interval: 5s
-      timeout: 20s
-      retries: 10
-      start_period: 100s
+      test:
+        ["CMD-SHELL", "mysql -h localhost -u root -ppassword -e 'SELECT 1;'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mariadb_data:
