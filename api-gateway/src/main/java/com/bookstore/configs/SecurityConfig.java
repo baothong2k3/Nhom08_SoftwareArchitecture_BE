@@ -1,6 +1,5 @@
 package com.bookstore.configs;
 
-
 import com.bookstore.filters.JWTGlobalFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,13 +7,11 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-<<<<<<< HEAD
-=======
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
->>>>>>> 70eb395 (create docker)
 
 @Configuration
 @EnableWebFluxSecurity
@@ -27,26 +24,16 @@ public class SecurityConfig {
     }
 
     @Bean
-<<<<<<< HEAD
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
-        http.csrf(csrfSpec -> csrfSpec.disable())
-                .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-=======
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
->>>>>>> 70eb395 (create docker)
                         .pathMatchers("/api/auth/sign-up", "/api/auth/sign-in").permitAll()
                         .pathMatchers("/products/**", "/orders/**", "/customers/**").authenticated()
                         .anyExchange().permitAll()
                 )
                 .addFilterBefore(jwtGlobalFilter, SecurityWebFiltersOrder.AUTHENTICATION);
-<<<<<<< HEAD
-        return http.build();
-    }
-=======
 
         return http.build();
     }
@@ -63,7 +50,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-
->>>>>>> 70eb395 (create docker)
 }
