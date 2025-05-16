@@ -1,6 +1,5 @@
 package bookstore.authservice.configs;
 
-
 import bookstore.authservice.filters.JWTAuthenticationFilter;
 import bookstore.authservice.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +58,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-<<<<<<< HEAD
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration corsConfig = new CorsConfiguration();
                     corsConfig.addAllowedOrigin("*");
@@ -67,8 +65,6 @@ public class SecurityConfig {
                     corsConfig.addAllowedHeader("*");
                     return corsConfig;
                 }))
-=======
->>>>>>> 70eb395 (create docker)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, Endpoints.PUBLIC_GET_ENDPOINS).permitAll()
@@ -85,7 +81,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-
-
 }

@@ -1,0 +1,32 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: chatbot-service
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Cấu hình cho Feign Client
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: FULL
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true

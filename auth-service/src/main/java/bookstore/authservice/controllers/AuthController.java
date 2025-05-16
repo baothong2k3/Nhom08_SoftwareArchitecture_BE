@@ -1,23 +1,5 @@
 package bookstore.authservice.controllers;
 
-<<<<<<< HEAD
-import bookstore.authservice.dtos.SignInRequest;
-import bookstore.authservice.dtos.SignUpRequest;
-import bookstore.authservice.services.AccountService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-=======
 import bookstore.authservice.dtos.SendOtpRequest;
 import bookstore.authservice.dtos.SignInRequest;
 import bookstore.authservice.dtos.SignUpRequest;
@@ -30,7 +12,6 @@ import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
->>>>>>> 70eb395 (create docker)
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -41,20 +22,11 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Auth API", description = "Handle user authentication and authorization.")
-
 public class AuthController {
 
     private final AccountService accountService;
     private final RestTemplate restTemplate;
     private final AuthenticationManager authenticationManager;
-<<<<<<< HEAD
-
-    @Autowired
-    public AuthController(AccountService authService, AuthenticationManager authenticationManager) {
-       this.accountService = authService;
-       this.restTemplate = new RestTemplate();
-       this.authenticationManager = authenticationManager;
-=======
     private final OtpService otpService;
 
     @Autowired
@@ -63,7 +35,6 @@ public class AuthController {
         this.restTemplate = new RestTemplate();
         this.authenticationManager = authenticationManager;
         this.otpService = otpService;
->>>>>>> 70eb395 (create docker)
     }
 
     @PostMapping("/sign-up")
@@ -74,7 +45,7 @@ public class AuthController {
                     .collect(Collectors.toMap(
                             error -> error.getField(),
                             error -> error.getDefaultMessage(),
-                            (existing, replacement) -> existing, // Giữ lỗi đầu tiên nếu có trùng key
+                            (existing, replacement) -> existing,
                             LinkedHashMap::new
                     ));
 
@@ -85,12 +56,6 @@ public class AuthController {
 
         if (accountService.existsByPhoneNumber(signUpRequest.getPhoneNumber())) {
             response.put("status", HttpStatus.BAD_REQUEST.value());
-<<<<<<< HEAD
-            response.put("errors", Map.of("phoneNumber", "Phone number already exists!"));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-
-=======
             response.put("errors", Map.of("phoneNumber", "Số điện thoại đã tồn tại!"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -99,7 +64,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mã xác thực không hợp lệ!");
         }
 
->>>>>>> 70eb395 (create docker)
         try {
             ResponseEntity<?> result = accountService.signUp(signUpRequest);
             saveUserInformation(signUpRequest);
@@ -124,30 +88,18 @@ public class AuthController {
         try {
             String saveUserUrl = "http://localhost:8080/api/user/save";
 
-
-
-            // Tạo đối tượng chứa thông tin cần gửi đi
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("phoneNumber", signUpRequest.getPhoneNumber());
             userInfo.put("enabled", true);
 
-<<<<<<< HEAD
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userInfo);
-=======
-            // Cấu hình header
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userInfo, headers);
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userInfo,headers);
->>>>>>> 70eb395 (create docker)
-
-            // Gửi HTTP POST request đến API save
             ResponseEntity<Map> response = restTemplate.exchange(
                     saveUserUrl, HttpMethod.POST, entity, Map.class);
 
-            // Xử lý response nếu cần
             if (response.getStatusCode() != HttpStatus.CREATED) {
                 throw new RuntimeException("Failed to save user information: " + response.getBody());
             }
@@ -155,7 +107,6 @@ public class AuthController {
             System.err.println("Error while saving user information: " + ex.getMessage());
         }
     }
-
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signInUser(@RequestBody @Valid SignInRequest signInRequest, BindingResult bindingResult){
@@ -165,7 +116,7 @@ public class AuthController {
                     .collect(Collectors.toMap(
                             error -> error.getField(),
                             error -> error.getDefaultMessage(),
-                            (existing, replacement) -> existing, // Giữ lỗi đầu tiên nếu có trùng key
+                            (existing, replacement) -> existing,
                             LinkedHashMap::new
                     ));
 
@@ -173,10 +124,7 @@ public class AuthController {
             response.put("errors", errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-<<<<<<< HEAD
-=======
 
->>>>>>> 70eb395 (create docker)
         try {
             ResponseEntity<?> result = accountService.signIn(signInRequest, authenticationManager);
             return result;
@@ -186,8 +134,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-<<<<<<< HEAD
-=======
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody @Valid SendOtpRequest request, BindingResult bindingResult) {
@@ -213,7 +159,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        // Gửi OTP và xử lý lỗi chi tiết
         try {
             String otpStatus = otpService.generateOtp(request.getPhoneNumber());
             if (otpStatus.startsWith("Failed")) {
@@ -242,5 +187,4 @@ public class AuthController {
         otpService.generateOtp(phoneNumber);
         return ResponseEntity.ok("OTP resent successfully!");
     }
->>>>>>> 70eb395 (create docker)
 }

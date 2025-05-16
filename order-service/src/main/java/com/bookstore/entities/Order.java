@@ -1,8 +1,24 @@
 package com.bookstore.entities;
 
-<<<<<<< HEAD
-public class User {
-=======
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
->>>>>>> 70eb395 (create docker)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private Long userId;
+    private Long bookId;
+    private Integer quantity;
+    private Double totalPrice;
+    private String status;
 }

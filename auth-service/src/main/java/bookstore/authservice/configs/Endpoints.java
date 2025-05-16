@@ -14,11 +14,7 @@ public class Endpoints {
     public static final String[] PUBLIC_POST_ENDPOINS = {
             "api/auth/sign-up",
             "api/auth/sign-in",
-<<<<<<< HEAD
-            "/api/account/sign-in",
-=======
             "api/auth/send-otp",
->>>>>>> 70eb395 (create docker)
     };
 
     public static final String[] ADMIN_GET_ENDPOINS = {

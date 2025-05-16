@@ -9,11 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-<<<<<<< HEAD
     Optional<Cart> findByUserIdAndBookId(Long userId, Long bookId);
     List<Cart> findByUserId(Long userId);
     void deleteByUserIdAndBookId(Long userId, Long bookId);
-=======
-    List<Cart> findByUserId(Long userId);
->>>>>>> 70eb395 (create docker)
 }
