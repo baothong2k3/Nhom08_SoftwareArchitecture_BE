@@ -40,4 +40,11 @@ public class StatisticController {
         List<Map<String, Object>> topBooks = orderService.getTopSellingBooks(startDate, endDate);
         return ResponseEntity.ok(topBooks);
     }
+
+    @GetMapping("/monthly-revenue")
+    public ResponseEntity<List<Map<String, Object>>> getMonthlyRevenue(
+            @RequestParam int year) {
+        List<Map<String, Object>> monthlyRevenue = orderService.getMonthlyRevenue(year);
+        return ResponseEntity.ok(monthlyRevenue);
+    }
 }

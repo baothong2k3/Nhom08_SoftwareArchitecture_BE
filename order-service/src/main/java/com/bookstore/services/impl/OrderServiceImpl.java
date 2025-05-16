@@ -178,4 +178,32 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Map<String, Object>> getMonthlyRevenue(int year) {
+        List<Order> orders = orderRepository.findAllByStatusAndYear(OrderStatus.DELIVERED, year);
+
+        // Initialize revenue for all 12 months with 0
+        Map<Integer, BigDecimal> revenueByMonth = new HashMap<>();
+        for (int i = 1; i <= 12; i++) {
+            revenueByMonth.put(i, BigDecimal.ZERO);
+        }
+
+        // Calculate revenue for months with orders
+        for (Order order : orders) {
+            int month = order.getCreatedAt().getMonthValue();
+            revenueByMonth.put(month, revenueByMonth.get(month).add(order.getTotalPrice()));
+        }
+
+        // Convert to list of maps
+        return revenueByMonth.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> monthRevenue = new HashMap<>();
+                    monthRevenue.put("month", entry.getKey());
+                    monthRevenue.put("revenue", entry.getValue());
+                    return monthRevenue;
+                })
+                .sorted((m1, m2) -> Integer.compare((int) m1.get("month"), (int) m2.get("month")))
+                .collect(Collectors.toList());
+    }
+
 }

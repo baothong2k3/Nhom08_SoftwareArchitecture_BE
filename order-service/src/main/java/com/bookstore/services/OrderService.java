@@ -19,4 +19,5 @@ public interface OrderService {
     List<Order> getAllOrders();
     Order getOrderById(Long id);
     List<Map<String, Object>> getTopSellingBooks(LocalDate startDate, LocalDate endDate);
+    List<Map<String, Object>> getMonthlyRevenue(int year);
 }

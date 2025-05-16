@@ -19,4 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByStatus(OrderStatus status);
 
     List<Order> findAllByStatusAndCreatedAtBetween(OrderStatus status, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT o FROM Order o WHERE o.status = :status AND YEAR(o.createdAt) = :year")
+    List<Order> findAllByStatusAndYear(@Param("status") OrderStatus status, @Param("year") int year);
 }
