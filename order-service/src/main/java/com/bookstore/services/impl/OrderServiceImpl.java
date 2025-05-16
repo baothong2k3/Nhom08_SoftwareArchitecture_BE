@@ -234,4 +234,32 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Map<String, Object>> getTopCustomers(LocalDate startDate, LocalDate endDate) {
+        List<Order> orders;
+
+        if (startDate != null && endDate != null) {
+            orders = orderRepository.findAllByStatusAndCreatedAtBetween(OrderStatus.DELIVERED, startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        } else {
+            orders = orderRepository.findAllByStatus(OrderStatus.DELIVERED);
+        }
+
+        Map<Long, Map<String, Object>> customerStats = new HashMap<>();
+        for (Order order : orders) {
+            Long userId = order.getUserId();
+            customerStats.putIfAbsent(userId, new HashMap<>());
+            Map<String, Object> customerStat = customerStats.get(userId);
+
+            customerStat.put("userId", userId);
+            customerStat.put("userName", order.getUserName());
+            customerStat.put("totalSpent", ((BigDecimal) customerStat.getOrDefault("totalSpent", BigDecimal.ZERO))
+                    .add(order.getTotalPrice()));
+            customerStat.put("orderCount", (int) customerStat.getOrDefault("orderCount", 0) + 1);
+        }
+
+        return customerStats.values().stream()
+                .sorted((c1, c2) -> ((BigDecimal) c2.get("totalSpent")).compareTo((BigDecimal) c1.get("totalSpent")))
+                .limit(10)
+                .collect(Collectors.toList());
+    }
 }

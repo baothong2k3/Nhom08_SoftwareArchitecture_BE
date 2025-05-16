@@ -55,4 +55,12 @@ public class StatisticController {
         List<Map<String, Object>> yearlyRevenue = orderService.getYearlyRevenue(startYear, endYear);
         return ResponseEntity.ok(yearlyRevenue);
     }
+
+    @GetMapping("/top-customers")
+    public ResponseEntity<List<Map<String, Object>>> getTopCustomers(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        List<Map<String, Object>> topCustomers = orderService.getTopCustomers(startDate, endDate);
+        return ResponseEntity.ok(topCustomers);
+    }
 }
