@@ -110,4 +110,10 @@ public class BookController {
         bookService.increaseStock(id, quantity);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam String keyword) {
+        List<BookDTO> books = bookService.searchBooks(keyword);
+        return ResponseEntity.ok(books);
+    }
 }

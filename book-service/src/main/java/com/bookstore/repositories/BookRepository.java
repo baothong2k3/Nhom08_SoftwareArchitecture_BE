@@ -14,6 +14,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("SELECT b FROM Book b ORDER BY b.createdAt DESC")
     List<Book> findTop10ByOrderByCreatedAtDesc();
 
-//    @Query("SELECT b FROM Book b ORDER BY function('RAND')")
-//    Page<Book> findAll(Pageable pageable);
+    @Query("SELECT b FROM Book b WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Book> searchBooksByTitleOrAuthor(String keyword);
 }
