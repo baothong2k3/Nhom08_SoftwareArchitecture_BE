@@ -65,7 +65,7 @@ public class SecurityConfig {
 
         // Sử dụng setAllowedOrigins thay vì setAllowedOriginPatterns
         config.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         config.setAllowCredentials(true);

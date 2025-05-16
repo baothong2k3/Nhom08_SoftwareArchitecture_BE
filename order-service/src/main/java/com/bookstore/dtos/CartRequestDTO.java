@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @Setter
 public class CartRequestDTO {
     private Long cartId;
+    private String image;
     private Long bookId;
     private int quantity;
     private BigDecimal price;

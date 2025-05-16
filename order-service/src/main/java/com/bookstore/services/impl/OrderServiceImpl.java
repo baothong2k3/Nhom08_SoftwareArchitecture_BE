@@ -59,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
                     .bookId(item.getBookId())
                     .bookTitle(item.getBookTitle())
                     .price(item.getPrice())
+                    .image(item.getImage())
                     .totalPrice(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                     .quantity(item.getQuantity())
                     .order(order)
@@ -92,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersByStatus(OrderStatus status) {
         return orderRepository.findAllByStatusOrderByCreatedAtDesc(status);
     }
+
     @Override
     public List<OrderDetail> getOrderDetailsByOrderId(Long orderId) {
         Order order = orderRepository.findById(orderId)

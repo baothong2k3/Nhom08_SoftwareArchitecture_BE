@@ -33,6 +33,9 @@ public class OrderDetail {
     private int quantity;
 
     @Column(nullable = false)
+    private String image;
+
+    @Column(nullable = false)
     private BigDecimal price;
 
     @Column(name = "book_id", nullable = false)

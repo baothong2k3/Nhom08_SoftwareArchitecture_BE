@@ -225,30 +225,25 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{id}/update")
+    @PutMapping("/update")
     @Operation(summary = "Update user information", description = "Update fullName, dob, and email of a user")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
-            @PathVariable Long id,
+    public ResponseEntity<?> updateUser(
+            @RequestHeader("UserId") Long id,
             @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        Map<String, Object> response = new LinkedHashMap<>();
         try {
             UserDTO updatedUser = userService.updateUser(id, updateUserRequest);
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("SUCCESS")
-                    .message("User updated successfully")
-                    .response(updatedUser)
-                    .build();
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", updatedUser);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("FAILURE")
-                    .message(ex.getMessage())
-                    .build();
+           response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", ex.getMessage());
             return ResponseEntity.badRequest().body(response);
         } catch (Exception ex) {
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("ERROR")
-                    .message("An unexpected error occurred")
-                    .build();
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "An unexpected error occurred");
+            response.put("error", ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
