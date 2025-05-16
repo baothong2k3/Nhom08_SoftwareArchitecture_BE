@@ -15,6 +15,7 @@ public class Endpoints {
             "api/auth/sign-up",
             "api/auth/sign-in",
             "api/auth/send-otp",
+            "api/auth/verify-otp",
     };
 
     public static final String[] ADMIN_GET_ENDPOINS = {

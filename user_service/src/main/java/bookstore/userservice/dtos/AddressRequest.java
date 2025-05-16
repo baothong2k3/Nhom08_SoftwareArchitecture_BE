@@ -9,7 +9,6 @@ package bookstore.userservice.dtos;/*
  * @version: 1.0
  */
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
@@ -18,8 +17,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AddressRequest {
-    @NotBlank(message = "Address is required")
     private String address;
-
-    private Long userId;
 }

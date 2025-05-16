@@ -11,4 +11,6 @@ public interface CartService {
     void increaseBookQuantity(Long userId, Long bookId);
     void decreaseBookQuantity(Long userId, Long bookId);
     void clearCart(Long userId);
+    void removeMultipleBooksFromCart(Long userId, List<Long> cartIds);
+
 }

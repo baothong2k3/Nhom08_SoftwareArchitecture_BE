@@ -46,16 +46,16 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public Address addAddress(AddressRequest addressRequest) {
-        User user = userRepository.findById(addressRequest.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + addressRequest.getUserId()));
+    public Address addAddress(Long userId,String address) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-        Address address = Address.builder()
-                .address(addressRequest.getAddress())
+        Address addres = Address.builder()
+                .address(address)
                 .user(user)
                 .build();
 
-        return addressRepository.save(address);
+        return addressRepository.save(addres);
     }
 
     @Override

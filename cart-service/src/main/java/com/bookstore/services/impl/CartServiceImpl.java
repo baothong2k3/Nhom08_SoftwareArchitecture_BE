@@ -24,7 +24,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponseDTO addBookToCart(Long userId, Long bookId) {
-        String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
+        String bookServiceUrl = "http://localhost:8080/api/books/" + bookId;
         BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
         if (bookDTO == null || !bookDTO.isStatus()) {
@@ -135,5 +135,13 @@ public class CartServiceImpl implements CartService {
     public void clearCart(Long userId) {
         List<Cart> cartItems = cartRepository.findByUserId(userId);
         cartRepository.deleteAll(cartItems);
+    }
+
+    @Override
+    public void removeMultipleBooksFromCart(Long userId, List<Long> cartIds) {
+        List<Cart> cartsToDelete = cartRepository.findAllById(cartIds).stream()
+                .filter(cart -> cart.getUserId().equals(userId))
+                .collect(Collectors.toList());
+        cartRepository.deleteAll(cartsToDelete);
     }
 }

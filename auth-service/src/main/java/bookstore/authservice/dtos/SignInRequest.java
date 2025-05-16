@@ -13,10 +13,9 @@ import lombok.*;
 @ToString
 @Builder
 public class SignInRequest {
-    @NotBlank(message = "Password is required!")
+    @NotBlank(message = "Vui lòng nhập mật khẩu!")
     private String password;
 
-    @NotBlank(message = "Username is required!")
+    @NotBlank(message = "Vui lòng nhập email hoặc số điện thoại!")
     private String username;
-
 }
