@@ -16,4 +16,5 @@ public interface BookService {
     List<BookDTO> getNewestBooks();
     void updateStockQuantity(Long id, int quantity);
     boolean isStockAvailable(Long bookId, int quantity);
+    void increaseStock(Long id, int quantity);
 }

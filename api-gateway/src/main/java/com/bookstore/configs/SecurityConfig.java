@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.bookstore.configs.SecurityConstants.PUBLIC_PATHS;
+import static com.bookstore.configs.SecurityConstants.TOKEN_PATHS;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -37,7 +38,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers(PUBLIC_PATHS).permitAll()
-                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**","/api/user/get","/api/user/add-address").authenticated()
+                        .pathMatchers(TOKEN_PATHS).authenticated()
                         .anyExchange().permitAll()
                 )
                 // Quan trọng: Sử dụng NoOpServerSecurityContextRepository để không lưu context (stateless JWT)

@@ -12,4 +12,16 @@ public class SecurityConstants {
     };
 
     public static final String[] ADMIN_ONLY_PATHS = { "/user/all" };
+
+    public static final String[] TOKEN_PATHS = {
+            "/api/cart/",
+            "/api/orders/",
+            "/customers/",
+            "/api/user/get",
+            "/api/user/add-address",
+            "/api/orders/*/details",
+            "/api/user/update",
+            "/api/orders/*/cancel",
+            "/api/books/*/increase-stock"
+    };
 }

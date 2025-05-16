@@ -105,13 +105,15 @@ public class OrderServiceImpl implements OrderService {
     public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
-
         // Validate status transition
         if (!isValidStatusTransition(order.getStatus(), newStatus)) {
             throw new IllegalArgumentException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
         }
-
         order.setStatus(newStatus);
+        // Nếu hủy đơn hàng, xóa tất cả chi tiết đơn hàng
+        if (newStatus == OrderStatus.CANCELED) {
+            order.getOrderDetails().clear();
+        }
         return orderRepository.save(order);
     }
 
@@ -134,6 +136,11 @@ public class OrderServiceImpl implements OrderService {
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+
+    public Order getOrderById(Long id) {
+        return orderRepository.findById(id).orElse(null);
     }
 
 }

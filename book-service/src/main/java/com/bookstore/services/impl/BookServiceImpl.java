@@ -6,11 +6,13 @@ import com.bookstore.repositories.BookRepository;
 import com.bookstore.services.BookService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -141,6 +143,14 @@ public class BookServiceImpl implements BookService {
             } else {
                 throw new IllegalArgumentException("Not enough stock for book ID: " + id);
             }
+        });
+    }
+
+    @Override
+    public void increaseStock(Long id, int quantity) {
+        bookRepository.findById(id).ifPresent(book -> {
+            book.setStockQuantity(book.getStockQuantity() + quantity);
+            bookRepository.save(book);
         });
     }
 
