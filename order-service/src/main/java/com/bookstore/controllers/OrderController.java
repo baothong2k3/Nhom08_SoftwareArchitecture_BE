@@ -1,8 +1,6 @@
 package com.bookstore.controllers;
 
 import com.bookstore.dtos.CartRequestDTO;
-import com.bookstore.dtos.CartResponseDTO;
-import com.bookstore.dtos.OrderRequestDTO;
 import com.bookstore.dtos.PlaceOrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
@@ -10,14 +8,10 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @RestController

@@ -6,13 +6,11 @@ import com.bookstore.repositories.BookRepository;
 import com.bookstore.services.BookService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +24,7 @@ public class BookServiceImpl implements BookService {
 
     @Autowired
     private Cloudinary cloudinary;
-    
+
     @Autowired
     private ModelMapper modelMapper;
 
@@ -78,20 +76,20 @@ public class BookServiceImpl implements BookService {
                     if (bookDTO.getDescription() != null) {
                         book.setDescription(bookDTO.getDescription());
                     }
-                    
+
                     // For primitive types, we need to check if they were explicitly included
                     // For stockQuantity, if it's included in the DTO (even if 0), update it
                     if (bookDTO.getStockQuantity() >= 0) {
                         book.setStockQuantity(bookDTO.getStockQuantity());
                     }
-                    
+
                     // For status, we assume any explicit value in the DTO should be used
                     book.setStatus(bookDTO.isStatus());
-                    
+
                     // Do not update imageUrl, publicId, or handle imageFile here
-                    
+
                     // updatedAt will be set by the @PreUpdate method
-                    
+
                     Book savedBook = bookRepository.save(book);
                     return modelMapper.map(savedBook, BookDTO.class);
                 })
@@ -107,16 +105,16 @@ public class BookServiceImpl implements BookService {
                         if (book.getPublicId() != null && !book.getPublicId().isEmpty()) {
                             cloudinary.uploader().destroy(book.getPublicId(), ObjectUtils.emptyMap());
                         }
-                        
+
                         // Upload the new image
                         var uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
-                        
+
                         // Update book with new image information
                         book.setPublicId(uploadResult.get("public_id").toString());
                         book.setImageUrl(uploadResult.get("url").toString());
-                        
+
                         // The updatedAt field will be set by the @PreUpdate method
-                        
+
                         // Save the updated book
                         Book savedBook = bookRepository.save(book);
                         return modelMapper.map(savedBook, BookDTO.class);
@@ -134,6 +132,7 @@ public class BookServiceImpl implements BookService {
                 .map(book -> modelMapper.map(book, BookDTO.class))
                 .collect(Collectors.toList());
     }
+
     @Override
     public void updateStockQuantity(Long id, int quantity) {
         bookRepository.findById(id).ifPresent(book -> {
@@ -161,5 +160,18 @@ public class BookServiceImpl implements BookService {
             return book.getStockQuantity() >= quantity;
         }
         return false;
+    }
+
+    @Override
+    public List<BookDTO> searchBooks(String keyword) {
+        List<Book> books = bookRepository.searchBooksByTitleOrAuthor(keyword);
+        return books.stream()
+                .map(book -> modelMapper.map(book, BookDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getAllCategories() {
+        return bookRepository.findDistinctCategories();
     }
 }
