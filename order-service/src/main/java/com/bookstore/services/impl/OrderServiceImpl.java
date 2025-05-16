@@ -9,6 +9,7 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.repositories.OrderRepository;
 import com.bookstore.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -58,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
                     .bookId(item.getBookId())
                     .bookTitle(item.getBookTitle())
                     .price(item.getPrice())
+                    .image(item.getImage())
                     .totalPrice(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                     .quantity(item.getQuantity())
                     .order(order)
@@ -91,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersByStatus(OrderStatus status) {
         return orderRepository.findAllByStatusOrderByCreatedAtDesc(status);
     }
+
     @Override
     public List<OrderDetail> getOrderDetailsByOrderId(Long orderId) {
         Order order = orderRepository.findById(orderId)
@@ -128,4 +131,9 @@ public class OrderServiceImpl implements OrderService {
                 return false;
         }
     }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
 }

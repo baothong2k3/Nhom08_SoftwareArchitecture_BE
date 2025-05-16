@@ -95,6 +95,22 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/get")
+    public ResponseEntity<?> getUserByToken(@RequestHeader("UserId") Long id) {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        UserDTO userDTO = userService.findById(id);
+        if (userDTO == null) {
+            response.put("status", HttpStatus.NOT_FOUND.value());
+            response.put("message", "User not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        List<AddressDTO> addresses = addressService.getAddressesByUserId(id);
+        userDTO.setAddresses(addresses);
+        response.put("status", HttpStatus.OK.value());
+        response.put("message", userDTO);
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/all")
     @Operation(summary = "getAllUsers", description = "Get all users")
@@ -112,27 +128,18 @@ public class UserController {
 
     @PostMapping("/add-address")
     @Operation(summary = "Add address to user", description = "Add a new address for a user")
-    public ResponseEntity<ApiResponse<Address>> addAddress(@Valid @RequestBody AddressRequest addressRequest) {
+    public ResponseEntity<?> addAddress(@RequestHeader("UserId") Long userId, @RequestBody AddressRequest address) {
+        Map<String, Object> response = new LinkedHashMap<>();
+
         try {
-            Address savedAddress = addressService.addAddress(addressRequest);
-            ApiResponse<Address> response = ApiResponse.<Address>builder()
-                    .status("SUCCESS")
-                    .message("Address added successfully")
-                    .response(savedAddress)
-                    .build();
+            Address savedAddress = addressService.addAddress(userId, address.getAddress());
+            response.put("status", HttpStatus.CREATED.value());
+            response.put("message", savedAddress);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException ex) {
-            ApiResponse<Address> response = ApiResponse.<Address>builder()
-                    .status("FAILURE")
-                    .message(ex.getMessage())
-                    .build();
-            return ResponseEntity.badRequest().body(response);
-        } catch (Exception ex) {
-            ApiResponse<Address> response = ApiResponse.<Address>builder()
-                    .status("ERROR")
-                    .message("An unexpected error occurred")
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (RuntimeException e) {
+            response.put("status", HttpStatus.NOT_FOUND.value());
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 
@@ -218,30 +225,25 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{id}/update")
+    @PutMapping("/update")
     @Operation(summary = "Update user information", description = "Update fullName, dob, and email of a user")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
-            @PathVariable Long id,
+    public ResponseEntity<?> updateUser(
+            @RequestHeader("UserId") Long id,
             @Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        Map<String, Object> response = new LinkedHashMap<>();
         try {
             UserDTO updatedUser = userService.updateUser(id, updateUserRequest);
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("SUCCESS")
-                    .message("User updated successfully")
-                    .response(updatedUser)
-                    .build();
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", updatedUser);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("FAILURE")
-                    .message(ex.getMessage())
-                    .build();
+           response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", ex.getMessage());
             return ResponseEntity.badRequest().body(response);
         } catch (Exception ex) {
-            ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
-                    .status("ERROR")
-                    .message("An unexpected error occurred")
-                    .build();
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "An unexpected error occurred");
+            response.put("error", ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

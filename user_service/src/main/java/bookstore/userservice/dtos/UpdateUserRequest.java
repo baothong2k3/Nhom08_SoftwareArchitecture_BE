@@ -24,16 +24,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UpdateUserRequest {
-    @NotBlank(message = "Full name is required!")
-    @Size(min = 5, message = "Full name must have at least 5 characters!")
-    @Size(max = 50, message = "Full name can have at most 50 characters!")
     private String fullName;
-
-    @Email(message = "Email is not in valid format!")
-    @NotBlank(message = "Email is required!")
     private String email;
-
-    @Past(message = "Date of birth must be in the past!")
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dob;
 }

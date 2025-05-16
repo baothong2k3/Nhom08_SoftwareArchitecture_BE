@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers(PUBLIC_PATHS).permitAll()
-                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**").authenticated()
+                        .pathMatchers("/api/cart/**", "api/orders/**", "/customers/**","/api/user/get","/api/user/add-address").authenticated()
                         .anyExchange().permitAll()
                 )
                 // Quan trọng: Sử dụng NoOpServerSecurityContextRepository để không lưu context (stateless JWT)
@@ -65,7 +65,7 @@ public class SecurityConfig {
 
         // Sử dụng setAllowedOrigins thay vì setAllowedOriginPatterns
         config.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         config.setAllowCredentials(true);

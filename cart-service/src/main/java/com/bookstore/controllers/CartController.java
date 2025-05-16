@@ -57,4 +57,14 @@ public class CartController {
         cartService.clearCart(userId);
         return ResponseEntity.ok().build();
     }
+
+
+    @DeleteMapping("/remove-multiple")
+    public ResponseEntity<Boolean> removeMultipleBooksFromCart(
+            @RequestHeader(value = "UserId") Long userId,
+            @RequestBody List<Long> cartIds) {
+        cartService.removeMultipleBooksFromCart(userId, cartIds);
+        return ResponseEntity.ok(true);
+    }
+
 }

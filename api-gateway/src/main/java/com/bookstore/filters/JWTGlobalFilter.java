@@ -120,7 +120,7 @@ public class JWTGlobalFilter implements WebFilter {
             return chain.filter(exchange); // Nếu là public path, không cần xác thực
         }
 
-        if (path.equals("/api/user/all")) {
+        if (path.equals("/api/user/all") || path.equals("/api/orders/all")) {
             String token = extractJwtFromRequest(exchange);
             Claims claims = extractClaims(token);
             if (claims == null) {
@@ -143,8 +143,11 @@ public class JWTGlobalFilter implements WebFilter {
             }
         }
 
+
         // Yêu cầu token cho các endpoint bảo mật
-        if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/")) {
+        if (path.startsWith("/api/cart/") || path.startsWith("/api/orders/") || path.startsWith("/customers/") || path.startsWith("/api/user/get")
+            || path.startsWith("/api/user/add-address") || path.startsWith("/api/orders/*/details") || path.startsWith("/api/user/update")
+        ) {
 
             String token = extractJwtFromRequest(exchange);
 
