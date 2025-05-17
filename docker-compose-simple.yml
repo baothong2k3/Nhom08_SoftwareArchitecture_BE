@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Database
@@ -25,7 +25,7 @@ services:
       - "6379:6379"
     networks:
       - bookstore-network
-      
+
   # Eureka Service Discovery
   service-discovery:
     image: openjdk:17-slim

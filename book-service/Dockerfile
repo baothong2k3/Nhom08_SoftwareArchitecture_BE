@@ -1,12 +1,10 @@
-FROM maven:3.8.5-openjdk-17 AS build
+FROM maven:3.8.5-openjdk-17 as build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-# Thêm tham số -Dspring-boot.repackage.skip=true để bỏ qua bước repackage
-RUN mvn clean package -DskipTests -Dspring-boot.repackage.skip=true
+RUN mvn clean package -DskipTests
 
 FROM openjdk:17-slim
 WORKDIR /app
 COPY --from=build /app/target/*.jar book-service.jar
-EXPOSE 8003
 ENTRYPOINT ["java", "-jar", "book-service.jar"]
