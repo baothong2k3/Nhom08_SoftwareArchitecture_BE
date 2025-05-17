@@ -1,0 +1,243 @@
+version: '3.8'
+
+services:
+  # Database
+  mariadb:
+    image: mariadb:10.6
+    container_name: bookstore-mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bookstore
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - bookstore-network
+
+  # Redis
+  redis:
+    image: redis:latest
+    container_name: bookstore-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - bookstore-network
+      
+  # Eureka Service Discovery
+  service-discovery:
+    image: openjdk:17-slim
+    container_name: bookstore-eureka
+    restart: always
+    ports:
+      - "8761:8761"
+    volumes:
+      - ./service-discovery/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "service-discovery-0.0.1-SNAPSHOT.jar"]
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_INSTANCE_HOSTNAME=service-discovery
+      - EUREKA_CLIENT_REGISTERWITHEUREKASERVER=false
+      - EUREKA_CLIENT_FETCHREGISTRY=false
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_SERVER_ENABLESELFREPLICATION=true
+      - EUREKA_SERVER_WAITTIMEDIRTYPERIOD=10000
+
+  # Config Server
+  config-server:
+    image: openjdk:17-slim
+    container_name: bookstore-config
+    restart: always
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-server/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "config-server-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+
+  # API Gateway
+  api-gateway:
+    image: openjdk:17-slim
+    container_name: bookstore-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api-gateway/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "api-gateway-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - redis
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+
+  # User Service
+  user-service:
+    image: openjdk:17-slim
+    container_name: bookstore-user-service
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./user_service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "user-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  # Auth Service
+  auth-service:
+    image: openjdk:17-slim
+    container_name: bookstore-auth-service
+    restart: always
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./auth-service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "auth-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  # Book Service
+  book-service:
+    image: openjdk:17-slim
+    container_name: bookstore-book-service
+    restart: always
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./book-service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "book-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  # Cart Service
+  cart-service:
+    image: openjdk:17-slim
+    container_name: bookstore-cart-service
+    restart: always
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./cart-service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "cart-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  # Order Service
+  order-service:
+    image: openjdk:17-slim
+    container_name: bookstore-order-service
+    restart: always
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./order-service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "order-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  # Inventory Service
+  inventory-service:
+    image: openjdk:17-slim
+    container_name: bookstore-inventory-service
+    restart: always
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./inventory-service/target:/app
+    working_dir: /app
+    command: ["java", "-jar", "inventory-service-0.0.1-SNAPSHOT.jar"]
+    depends_on:
+      - service-discovery
+      - config-server
+      - mariadb
+    networks:
+      - bookstore-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/bookstore
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+networks:
+  bookstore-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
