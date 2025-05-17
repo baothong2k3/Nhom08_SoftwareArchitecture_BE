@@ -2,23 +2,39 @@ package com.bookstore.services.impl;
 
 import com.bookstore.dtos.CartRequestDTO;
 import com.bookstore.dtos.CartResponseDTO;
+import com.bookstore.dtos.OrderMessage;
 import com.bookstore.dtos.OrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
 import com.bookstore.entities.OrderStatus;
 import com.bookstore.repositories.OrderRepository;
 import com.bookstore.services.OrderService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+
+    @Value("${app.rabbit.queue-name}")
+    private String queueName;
+    @Value("${app.rabbit.exchange-name}")
+    private String exchangeName;
+    @Value("${app.rabbit.routing-key}")
+    private String routingKey;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -77,7 +93,21 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDetails(orderDetails);
         // 6. Lưu Order (sẽ tự cascade lưu OrderDetail)
         try {
-            orderRepository.save(order);
+            Order or = orderRepository.save(order);
+            if(orderRequestDTO.getEmail() != null && !orderRequestDTO.getEmail().isEmpty()){
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                String createdAtString = order.getCreatedAt().format(formatter);
+                OrderMessage orderMessage = OrderMessage.builder()
+                        .email(orderRequestDTO.getEmail())
+                        .phoneNumber(orderRequestDTO.getPhoneNumber())
+                        .shippingAddress(orderRequestDTO.getShippingAddress())
+                        .paymentMethod(orderRequestDTO.getPaymentMethod().toString())
+                        .createdAt(createdAtString)
+                        .id(or.getId())
+                        .totalPrice(orderRequestDTO.getTotalPrice())
+                        .build();
+                rabbitTemplate.convertAndSend(exchangeName, routingKey, orderMessage);
+            }
             return "Đơn hàng đã được tạo thành công";
         } catch (Exception e) {
             return "Đã xảy ra lỗi khi tạo đơn hàng: " + e.getMessage();
@@ -110,10 +140,6 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
         }
         order.setStatus(newStatus);
-        // Nếu hủy đơn hàng, xóa tất cả chi tiết đơn hàng
-        if (newStatus == OrderStatus.CANCELED) {
-            order.getOrderDetails().clear();
-        }
         return orderRepository.save(order);
     }
 
@@ -141,6 +167,12 @@ public class OrderServiceImpl implements OrderService {
 
     public Order getOrderById(Long id) {
         return orderRepository.findById(id).orElse(null);
+    }
+
+
+    @Override
+    public Page<Order> getPagedOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 
 }

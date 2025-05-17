@@ -1,5 +1,6 @@
 package com.bookstore.dtos;
 
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,4 +26,6 @@ public class CartResponseDTO {
     private String bookImageUrl;
     private BigDecimal price;
     private BigDecimal totalPrice;
+    private Integer discountPercent;
+    private BigDecimal discountedPrice;
 }

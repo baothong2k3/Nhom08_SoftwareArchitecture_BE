@@ -2,8 +2,11 @@ package bookstore.userservice.services;
 
 import bookstore.userservice.dtos.UpdateUserRequest;
 import bookstore.userservice.dtos.UserDTO;
+import bookstore.userservice.dtos.UserReponseDTO;
 import bookstore.userservice.dtos.UserRequest;
 import bookstore.userservice.entities.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -17,7 +20,7 @@ public interface UserService {
 
     public UserDTO findById(Long id);
 
-    public List<UserDTO> findAll();
+    Page<UserReponseDTO> findAll(Pageable pageable);
 
     UserDTO updateUser(Long id, UpdateUserRequest updateUserRequest);
 

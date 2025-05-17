@@ -20,15 +20,18 @@ import lombok.*;
 @ToString
 @Builder
 public class ChangePasswordRequest {
+    @NotBlank(message = "Vui lòng nhập mật khẩu cũ!")
     @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
+            message = "Mật khẩu phải chứa ít nhất một chữ cái viết thường, một chữ cái viết hoa, một chữ số và một ký tự đặc biệt.")
     private String oldPassword;
 
+    @NotBlank(message = "Vui lòng nhập mật khẩu mới!")
     @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
+            message = "Mật khẩu phải chứa ít nhất một chữ cái viết thường, một chữ cái viết hoa, một chữ số và một ký tự đặc biệt.")
     private String newPassword;
 
+    @NotBlank(message = "Vui lòng nhập lại mật khẩu mới!")
     @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")
+            message = "Mật khẩu phải chứa ít nhất một chữ cái viết thường, một chữ cái viết hoa, một chữ số và một ký tự đặc biệt.")
     private String confirmPassword;
 }

@@ -86,6 +86,8 @@ public class CartServiceImpl implements CartService {
                     .bookDescription(bookDTO.getDescription())
                     .bookStatus(bookDTO.isStatus())
                     .bookImageUrl(bookDTO.getImageUrl())
+                    .discountPercent(bookDTO.getDiscountPercent())
+                    .discountedPrice(bookDTO.getDiscountedPrice())
                     .price(bookDTO.getPrice())
                     .totalPrice(totalPrice)
                     .build();
