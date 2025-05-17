@@ -1,0 +1,130 @@
+version: "3.8"
+
+services:
+  # Database
+  mariadb:
+    image: mariadb:latest
+    container_name: bookstore-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+    networks:
+      - bookstore-network
+
+  # Service Discovery
+  service-discovery:
+    build: ./service-discovery
+    container_name: bookstore-service-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - bookstore-network
+    restart: always
+
+  # Auth Service
+  auth-service:
+    build: ./auth-service
+    container_name: bookstore-auth-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/auth-service-bookstore?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - bookstore-network
+    restart: always
+
+  # User Service
+  user-service:
+    build: ./user-service
+    container_name: bookstore-user-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/user-service-bookstore?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - bookstore-network
+    restart: always
+
+  # Cart Service
+  cart-service:
+    build: ./cart-service
+    container_name: bookstore-cart-service
+    ports:
+      - "8004:8004"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/cart-service-bookstore?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - BOOK_SERVICE_URL=http://book-service:8080
+    networks:
+      - bookstore-network
+    restart: always
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    container_name: bookstore-order-service
+    ports:
+      - "8005:8005"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/order-service-bookstore?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - PAYMENT_SERVICE_URL=http://payment-service:8989
+      - CART_SERVICE_URL=http://cart-service:8004
+      - USER_SERVICE_URL=http://user-service:8001
+    networks:
+      - bookstore-network
+    restart: always
+
+  # Payment Service (Node.js)
+  payment-service:
+    build: ./payment-service
+    container_name: bookstore-payment-service
+    ports:
+      - "8989:8989"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - DB_HOST=mariadb
+      - DB_USER=root
+      - DB_PASS=root
+      - ORDER_SERVICE_URL=http://order-service:8005
+      - CART_SERVICE_URL=http://cart-service:8004
+    networks:
+      - bookstore-network
+    restart: always
+
+networks:
+  bookstore-network:
+    driver: bridge
+
+volumes:
+  mariadb-data:
