@@ -2,6 +2,7 @@ package com.bookstore.controllers;
 import com.bookstore.dtos.BookDTO;
 import com.bookstore.entities.Book;
 import com.bookstore.services.BookService;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,12 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
@@ -54,13 +58,32 @@ public class BookController {
     }
 
     @PostMapping(value = "/save",consumes = {"multipart/form-data"})
-    public ResponseEntity<Book> saveBook(@ModelAttribute BookDTO bookDTO) {
-        logger.info("Received save book request: {}", bookDTO.getTitle());
-        logger.debug("DEBUG FILE: {}", (bookDTO.getImageFile() != null ? bookDTO.getImageFile().getOriginalFilename() : "null"));
+    public ResponseEntity<?> saveBook(@Valid @ModelAttribute BookDTO bookDTO, BindingResult bindingResult) {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        if (bindingResult.hasErrors()) {
+            List<String> errorMessages = bindingResult.getFieldErrors().stream()
+                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                    .collect(Collectors.toList());
 
-        Book book = modelMapper.map(bookDTO, Book.class);
-        Book savedBook = bookService.saveBook(book, bookDTO.getImageFile());
-        return ResponseEntity.ok(savedBook);
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Dữ liệu không hợp lệ");
+            response.put("errors", errorMessages);
+            return ResponseEntity.badRequest().body(response);
+        }
+        try {
+            Book book = modelMapper.map(bookDTO, Book.class);
+            Book savedBook = bookService.saveBook(book, bookDTO.getImageFile());
+
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", "Lưu sách thành công");
+            response.put("data", savedBook);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "Lỗi khi lưu sách");
+            response.put("error", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PatchMapping("/{id}")
@@ -88,6 +111,7 @@ public class BookController {
             return ResponseEntity.notFound().build();
         }
     }
+
     @PatchMapping("/{id}/update-stock")
     public ResponseEntity<Void> updateStockQuantity(@PathVariable Long id, @RequestBody int quantity) {
         bookService.updateStockQuantity(id, quantity);
@@ -111,7 +135,35 @@ public class BookController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/search")
+
+    @PatchMapping(value = "/{id}/update", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> updateBookInfo(
+            @PathVariable Long id,
+            @ModelAttribute BookDTO bookDTO) {
+        logger.info("Updating book with ID: {}", id);
+        Map<String, Object> response = new LinkedHashMap<>();
+        try {
+            Book updatedBook = bookService.updateBookInfo(id, bookDTO, bookDTO.getImageFile());
+            if (updatedBook != null) {
+                response.put("status", HttpStatus.OK.value());
+                response.put("message", "Cập nhật sách thành công");
+                response.put("data", modelMapper.map(updatedBook, BookDTO.class));
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status", HttpStatus.NOT_FOUND.value());
+                response.put("message", "Không tìm thấy sách với ID = " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        } catch (Exception e) {
+            logger.error("Error updating book: {}", e.getMessage(), e);
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("message", "Lỗi khi cập nhật sách");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+  
+     @GetMapping("/search")
     public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam String keyword) {
         List<BookDTO> books = bookService.searchBooks(keyword);
         return ResponseEntity.ok(books);
@@ -122,4 +174,5 @@ public class BookController {
         List<String> categories = bookService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
+
 }
