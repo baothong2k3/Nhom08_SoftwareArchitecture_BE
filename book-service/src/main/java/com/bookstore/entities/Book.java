@@ -61,4 +61,21 @@ public class Book {
 
     private String publicId;
 
+    @Column(name = "discount_percent")
+    private Integer discountPercent;
+
+    @Column(name = "discounted_price")
+    private BigDecimal discountedPrice;
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+        if (discountPercent != null && price != null) {
+            BigDecimal discount = price.multiply(BigDecimal.valueOf(discountPercent))
+                    .divide(BigDecimal.valueOf(100));
+            this.discountedPrice = price.subtract(discount);
+        }
+    }
+
+
+
 }

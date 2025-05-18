@@ -17,4 +17,6 @@ public interface BookService {
     void updateStockQuantity(Long id, int quantity);
     boolean isStockAvailable(Long bookId, int quantity);
     void increaseStock(Long id, int quantity);
+    Book updateBookInfo(Long id, BookDTO bookDTO, MultipartFile imageFile);
+
 }

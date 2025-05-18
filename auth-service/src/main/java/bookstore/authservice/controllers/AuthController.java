@@ -215,6 +215,8 @@ public class AuthController {
             return ResponseEntity.badRequest().body(response);
         }
 
+
+
         try {
             // Lấy username từ token đã xác thực
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

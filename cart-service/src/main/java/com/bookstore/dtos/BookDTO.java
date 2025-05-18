@@ -1,5 +1,6 @@
 package com.bookstore.dtos;
 
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,4 +24,6 @@ public class BookDTO {
     private String imageUrl;
     private String publicId;
     private MultipartFile imageFile;
+    private Integer discountPercent;
+    private BigDecimal discountedPrice;
 }
