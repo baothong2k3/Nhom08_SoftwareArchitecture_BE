@@ -1,8 +1,6 @@
 package com.bookstore.controllers;
 
 import com.bookstore.dtos.CartRequestDTO;
-import com.bookstore.dtos.CartResponseDTO;
-import com.bookstore.dtos.OrderRequestDTO;
 import com.bookstore.dtos.PlaceOrderRequestDTO;
 import com.bookstore.entities.Order;
 import com.bookstore.entities.OrderDetail;
@@ -15,12 +13,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @RestController
