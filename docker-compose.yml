@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Database
   mariadb:
@@ -19,13 +17,48 @@ services:
 
   # Service Discovery
   service-discovery:
-    build: ./service-discovery
+    image: steeltoeoss/eureka-server
     container_name: bookstore-service-discovery
     ports:
       - "8761:8761"
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+
+  # Config Server
+  config-server:
+    image: hyness/spring-cloud-config-server
+    container_name: bookstore-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+    volumes:
+      - ./config-server/src/main/resources/config:/config
+    networks:
+      - bookstore-network
+    restart: on-failure
+
+  # Api Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: bookstore-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-discovery
+      - config-server
+    environment:
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    networks:
+      - bookstore-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Auth Service
   auth-service:
@@ -43,7 +76,12 @@ services:
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # User Service
   user-service:
@@ -61,7 +99,35 @@ services:
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Book Service
+  book-service:
+    build: ./book-service
+    container_name: bookstore-book-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - mariadb
+      - service-discovery
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/book-service-bookstore?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    networks:
+      - bookstore-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Cart Service
   cart-service:
@@ -77,10 +143,15 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
-      - BOOK_SERVICE_URL=http://book-service:8080
+      - BOOK_SERVICE_URL=http://book-service:8003
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Order Service
   order-service:
@@ -101,7 +172,12 @@ services:
       - USER_SERVICE_URL=http://user-service:8001
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Payment Service (Node.js)
   payment-service:
@@ -120,7 +196,33 @@ services:
       - CART_SERVICE_URL=http://cart-service:8004
     networks:
       - bookstore-network
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Chatbox Service
+  chatbox-service:
+    build: ./chatbox-service
+    container_name: bookstore-chatbox-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mariadb
+    environment:
+      - DB_HOST=mariadb
+      - DB_USER=root
+      - DB_PASS=root
+    networks:
+      - bookstore-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   bookstore-network:
