@@ -28,6 +28,7 @@ public class SecurityConstants {
             "/api/user/update",
             "/api/user/add-address",
             "/api/orders/*/details",
+            "/api/orders/place",
             "/api/orders/*/cancel",
             "/api/books/*/increase-stock",
             "/api/books/*/update",
