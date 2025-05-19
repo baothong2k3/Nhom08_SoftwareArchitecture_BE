@@ -132,7 +132,11 @@ public class JWTGlobalFilter implements WebFilter {
         }
 
         if (path.equals("/api/user/all") || path.equals("/api/orders/paged") || path.equals("/api/books/save") ||
-                path.equals("/api/user/paged")|| path.matches("^/api/orders/\\d+/update-status$")) {
+                path.equals("/api/user/paged")|| path.matches("^/api/orders/\\d+/update-status$")
+                || path.equals("/api/statistic/daily") || path.equals("/api/statistic/monthly")
+                || path.equals("/api/statistic/yearly") || path.equals("/custom")
+                || path.equals("/api/orders/search-by-phone")
+        ) {
             String token = extractJwtFromRequest(exchange);
             Claims claims = extractClaims(token);
             if (claims == null) {

@@ -20,7 +20,7 @@ public interface UserService {
 
     public UserDTO findById(Long id);
 
-    Page<UserReponseDTO> findAll(Pageable pageable);
+    Page<UserReponseDTO> findAll(Pageable pageable,String phoneNumber);
 
     UserDTO updateUser(Long id, UpdateUserRequest updateUserRequest);
 

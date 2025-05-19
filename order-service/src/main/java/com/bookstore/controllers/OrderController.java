@@ -12,6 +12,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -122,12 +123,25 @@ public class OrderController {
     @GetMapping("/paged")
     public ResponseEntity<Page<Order>> getPagedOrders(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) OrderStatus status) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Order> ordersPage = orderService.getPagedOrders(pageable);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> ordersPage = orderService.getPagedOrders(pageable, status);
         return ResponseEntity.ok(ordersPage);
     }
+
+    @GetMapping("/search-by-phone")
+    public ResponseEntity<Page<Order>> searchOrdersByPhone(
+            @RequestParam String phone,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> ordersPage = orderService.getPagedOrdersByPhone(phone, pageable);
+        return ResponseEntity.ok(ordersPage);
+    }
+
+
 
 
     @PatchMapping("/{orderId}/cancel")

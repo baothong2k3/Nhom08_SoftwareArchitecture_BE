@@ -58,8 +58,15 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional
     @Override
-    public Page<UserReponseDTO> findAll(Pageable pageable) {
-        Page<User> users=  userRepository.findAll(pageable);
+    public Page<UserReponseDTO> findAll(Pageable pageable, String phoneNumber) {
+        Page<User> users;
+
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            users = userRepository.findByPhoneNumberContainingIgnoreCase(phoneNumber, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+
         return users.map(user -> UserReponseDTO.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())

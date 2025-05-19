@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +32,26 @@ public class BookServiceImpl implements BookService {
     private ModelMapper modelMapper;
 
     @Override
-    public Page<BookDTO> getAllBooksPaged(int page, int size) {
-        Page<Book> booksPage = bookRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Order.asc("id"), Sort.Order.asc("title")))
-        );
+    public Page<BookDTO> getAllBooksPaged(int page, int size, String keyword) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Book> booksPage;
+        if (keyword == null || keyword.trim().isEmpty()) {
+            booksPage = bookRepository.findAll(pageable);
+        } else {
+            booksPage = bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(keyword, keyword, pageable);
+        }
+
         return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
     }
+
+    @Override
+    public Page<BookDTO> getBooksByCategory(String category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Book> booksPage = bookRepository.findByCategory(category, pageable);
+        return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
+    }
+
+
 
     @Override
     public BookDTO getBookById(Long id) {

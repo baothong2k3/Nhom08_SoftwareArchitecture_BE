@@ -24,6 +24,7 @@ public interface OrderService {
     List<Map<String, Object>> getMonthlyRevenue(int year);
     List<Map<String, Object>> getYearlyRevenue(int startYear, int endYear);
     List<Map<String, Object>> getTopCustomers(LocalDate startDate, LocalDate endDate);
-    Page<Order> getPagedOrders(Pageable pageable);
+    Page<Order> getPagedOrders(Pageable pageable, OrderStatus status);
+    Page<Order> getPagedOrdersByPhone(String phoneNumber, Pageable pageable);
 
 }
