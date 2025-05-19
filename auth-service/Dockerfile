@@ -4,7 +4,8 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar auth-service.jar
+EXPOSE 8002
 ENTRYPOINT ["java", "-jar", "auth-service.jar"]

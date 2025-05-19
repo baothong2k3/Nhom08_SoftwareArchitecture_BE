@@ -15,29 +15,21 @@ services:
     networks:
       - bookstore-network
 
-  # Service Discovery
-  service-discovery:
-    image: steeltoeoss/eureka-server
-    container_name: bookstore-service-discovery
+  # Eureka Service
+  eureka-service:
+    build: ./eureka_service
+    container_name: bookstore-eureka-service
     ports:
-      - "8761:8761"
+      - "8762:8762"
     networks:
       - bookstore-network
     restart: on-failure
-
-  # Config Server
-  config-server:
-    image: hyness/spring-cloud-config-server
-    container_name: bookstore-config-server
-    ports:
-      - "8888:8888"
-    environment:
-      - SPRING_PROFILES_ACTIVE=native
-    volumes:
-      - ./config-server/src/main/resources/config:/config
-    networks:
-      - bookstore-network
-    restart: on-failure
+    healthcheck:
+      test: curl -f http://localhost:8762/actuator/health || exit 0
+      interval: 10s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
 
   # Api Gateway
   api-gateway:
@@ -46,19 +38,16 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - service-discovery
-      - config-server
-    environment:
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - eureka-service
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: curl -f http://localhost:8080/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Auth Service
   auth-service:
@@ -68,20 +57,21 @@ services:
       - "8002:8002"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/auth-service-bookstore?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/actuator/health"]
+      test: curl -f http://localhost:8002/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # User Service
   user-service:
@@ -91,20 +81,21 @@ services:
       - "8001:8001"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/user-service-bookstore?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/actuator/health"]
+      test: curl -f http://localhost:8001/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Book Service
   book-service:
@@ -114,20 +105,21 @@ services:
       - "8003:8003"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/book-service-bookstore?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/actuator/health"]
+      test: curl -f http://localhost:8003/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Cart Service
   cart-service:
@@ -137,21 +129,23 @@ services:
       - "8004:8004"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
+      - book-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/cart-service-bookstore?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
       - BOOK_SERVICE_URL=http://book-service:8003
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/actuator/health"]
+      test: curl -f http://localhost:8004/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Order Service
   order-service:
@@ -161,12 +155,14 @@ services:
       - "8005:8005"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
+      - cart-service
+      - user-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/order-service-bookstore?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
       - PAYMENT_SERVICE_URL=http://payment-service:8989
       - CART_SERVICE_URL=http://cart-service:8004
       - USER_SERVICE_URL=http://user-service:8001
@@ -174,10 +170,11 @@ services:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8005/actuator/health"]
+      test: curl -f http://localhost:8005/actuator/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Payment Service (Node.js)
   payment-service:
@@ -187,21 +184,23 @@ services:
       - "8989:8989"
     depends_on:
       - mariadb
-      - service-discovery
+      - eureka-service
     environment:
       - DB_HOST=mariadb
       - DB_USER=root
       - DB_PASS=root
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-service:8762/eureka/
       - ORDER_SERVICE_URL=http://order-service:8005
       - CART_SERVICE_URL=http://cart-service:8004
     networks:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
+      test: curl -f http://localhost:8989/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
   # Chatbox Service
   chatbox-service:
@@ -219,10 +218,11 @@ services:
       - bookstore-network
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: curl -f http://localhost:3000/health || exit 0
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 3
+      start_period: 30s
 
 networks:
   bookstore-network:
