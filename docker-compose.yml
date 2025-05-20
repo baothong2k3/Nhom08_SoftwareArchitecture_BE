@@ -71,6 +71,24 @@ services:
       eureka-service:
         condition: service_healthy
 
+  user-service:
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - SPRING_APPLICATION_NAME=user-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://host.docker.internal:3306/user-service-bookstore?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=sapassword
+    networks:
+      - bookstore-network
+    depends_on:
+      eureka-service:
+        condition: service_healthy
+
   redis:
     image: redis:alpine
     ports:
