@@ -3,6 +3,7 @@ package bookstore.userservice.controllers;
 
 import bookstore.userservice.dtos.*;
 import bookstore.userservice.entities.Address;
+import bookstore.userservice.entities.User;
 import bookstore.userservice.services.AddressService;
 import bookstore.userservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -112,17 +116,18 @@ public class UserController {
     }
 
 
-    @GetMapping("/all")
-    @Operation(summary = "getAllUsers", description = "Get all users")
-    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
-        List<UserDTO> users = userService.findAll();
-        ApiResponse<List<UserDTO>> response = ApiResponse.<List<UserDTO>>builder()
-                .status("SUCCESS")
-                .message("Get user list successfully")
-                .response(users)
-                .build();
-        return ResponseEntity.ok(response);
+
+    @GetMapping("/paged")
+    public ResponseEntity<Page<UserReponseDTO>> getPagedUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String phoneNumber) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UserReponseDTO> userPage = userService.findAll(pageable, phoneNumber);
+        return ResponseEntity.ok(userPage);
     }
+
 
 
 

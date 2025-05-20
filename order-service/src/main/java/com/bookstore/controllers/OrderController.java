@@ -8,6 +8,11 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -51,6 +56,11 @@ public class OrderController {
                 if (cart.getCartId() != null) {
                     cartIds.add(cart.getCartId());
                 }
+            }
+            if(cartIds.isEmpty()) {
+                response.put("status", HttpStatus.OK.value());
+                response.put("message", orderResponse);
+                return ResponseEntity.ok(response);
             }
             try {
                 HttpHeaders headers = new HttpHeaders();
@@ -110,11 +120,29 @@ public class OrderController {
         return ResponseEntity.ok(updatedOrder);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Order>> getAllOrders() {
-        List<Order> orders = orderService.getAllOrders();
-        return ResponseEntity.ok(orders);
+    @GetMapping("/paged")
+    public ResponseEntity<Page<Order>> getPagedOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) OrderStatus status) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> ordersPage = orderService.getPagedOrders(pageable, status);
+        return ResponseEntity.ok(ordersPage);
     }
+
+    @GetMapping("/search-by-phone")
+    public ResponseEntity<Page<Order>> searchOrdersByPhone(
+            @RequestParam String phone,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> ordersPage = orderService.getPagedOrdersByPhone(phone, pageable);
+        return ResponseEntity.ok(ordersPage);
+    }
+
+
+
 
     @PatchMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
@@ -147,12 +175,13 @@ public class OrderController {
 
                         String url = "http://localhost:8080/api/books/" + bookId + "/increase-stock";
                         HttpEntity<Integer> request = new HttpEntity<>(quantity, headers);
-                        ResponseEntity<Void> bookResponse = new RestTemplate().exchange(
+                        ResponseEntity<Void> bookResponse = restTemplate.exchange(
                                 url,
                                 HttpMethod.PATCH,
                                 request,
                                 Void.class
                         );
+
                         System.out.println("Đã tăng lại số lượng cho sách ID " + bookId + ", status: " + bookResponse.getStatusCode());
                     } catch (Exception e) {
                         System.err.println("Lỗi khi gọi tăng stock: " + e.getMessage());
@@ -172,7 +201,5 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
 
 }

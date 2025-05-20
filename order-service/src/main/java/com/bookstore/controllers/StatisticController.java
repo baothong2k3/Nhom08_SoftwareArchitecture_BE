@@ -10,6 +10,7 @@ package com.bookstore.controllers;/*
  */
 
 import com.bookstore.services.OrderService;
+import com.bookstore.services.StatisticService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -28,39 +29,35 @@ import java.util.Map;
 public class StatisticController {
 
     @Autowired
-    private OrderService orderService;
+    private StatisticService statisticService;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @GetMapping("/top-books")
-    public ResponseEntity<List<Map<String, Object>>> getTopSellingBooks(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        List<Map<String, Object>> topBooks = orderService.getTopSellingBooks(startDate, endDate);
-        return ResponseEntity.ok(topBooks);
+    @GetMapping("/daily")
+    public ResponseEntity<Map<String, Object>> getDailyStats(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        Map<String, Object> stats = statisticService.getDailyStats(date);
+        return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/monthly-revenue")
-    public ResponseEntity<List<Map<String, Object>>> getMonthlyRevenue(
+    @GetMapping("/monthly")
+    public ResponseEntity<Map<String, Object>> getMonthlyStats(
+            @RequestParam int year,
+            @RequestParam int month) {
+        Map<String, Object> stats = statisticService.getMonthlyStats(year, month);
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/yearly")
+    public ResponseEntity<Map<String, Object>> getYearlyStats(
             @RequestParam int year) {
-        List<Map<String, Object>> monthlyRevenue = orderService.getMonthlyRevenue(year);
-        return ResponseEntity.ok(monthlyRevenue);
+        Map<String, Object> stats = statisticService.getYearlyStats(year);
+        return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/yearly-revenue")
-    public ResponseEntity<List<Map<String, Object>>> getYearlyRevenue(
-            @RequestParam int startYear,
-            @RequestParam int endYear) {
-        List<Map<String, Object>> yearlyRevenue = orderService.getYearlyRevenue(startYear, endYear);
-        return ResponseEntity.ok(yearlyRevenue);
-    }
-
-    @GetMapping("/top-customers")
-    public ResponseEntity<List<Map<String, Object>>> getTopCustomers(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        List<Map<String, Object>> topCustomers = orderService.getTopCustomers(startDate, endDate);
-        return ResponseEntity.ok(topCustomers);
+    @GetMapping("/custom")
+    public ResponseEntity<Map<String, Object>> getCustomRangeStats(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        Map<String, Object> stats = statisticService.getCustomRangeStats(startDate, endDate);
+        return ResponseEntity.ok(stats);
     }
 }

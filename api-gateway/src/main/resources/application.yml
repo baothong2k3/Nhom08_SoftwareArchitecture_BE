@@ -41,7 +41,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/orders/**,/api/statistic/**
         - id: book-service
           uri: lb://book-service
           predicates:

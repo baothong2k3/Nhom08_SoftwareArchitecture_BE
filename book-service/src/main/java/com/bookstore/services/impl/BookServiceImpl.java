@@ -10,10 +10,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,12 +32,26 @@ public class BookServiceImpl implements BookService {
     private ModelMapper modelMapper;
 
     @Override
-    public Page<BookDTO> getAllBooksPaged(int page, int size) {
-        Page<Book> booksPage = bookRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Order.asc("id"), Sort.Order.asc("title")))
-        );
+    public Page<BookDTO> getAllBooksPaged(int page, int size, String keyword) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Book> booksPage;
+        if (keyword == null || keyword.trim().isEmpty()) {
+            booksPage = bookRepository.findAll(pageable);
+        } else {
+            booksPage = bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(keyword, keyword, pageable);
+        }
+
         return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
     }
+
+    @Override
+    public Page<BookDTO> getBooksByCategory(String category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Book> booksPage = bookRepository.findByCategory(category, pageable);
+        return booksPage.map(book -> modelMapper.map(book, BookDTO.class));
+    }
+
+
 
     @Override
     public BookDTO getBookById(Long id) {
@@ -52,6 +69,11 @@ public class BookServiceImpl implements BookService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload image", e);
+        }
+        if(book.getDiscountPercent() != null && book.getDiscountPercent() > 0) {
+           book.setDiscountPercent(book.getDiscountPercent());
+        } else {
+            book.setDiscountedPrice(book.getPrice());
         }
         return bookRepository.save(book);
     }
@@ -162,6 +184,7 @@ public class BookServiceImpl implements BookService {
         return false;
     }
 
+
     @Override
     public List<BookDTO> searchBooks(String keyword) {
         List<Book> books = bookRepository.searchBooksByTitleOrAuthor(keyword);
@@ -174,4 +197,42 @@ public class BookServiceImpl implements BookService {
     public List<String> getAllCategories() {
         return bookRepository.findDistinctCategories();
     }
+
+
+    @Transactional
+    @Override
+    public Book updateBookInfo(Long id, BookDTO bookDTO, MultipartFile imageFile) {
+        Book existingBook = bookRepository.findById(id).orElse(null);
+        if (existingBook == null) return null;
+
+        existingBook.setAuthor(bookDTO.getAuthor());
+        existingBook.setPrice(bookDTO.getPrice());
+        existingBook.setStockQuantity(bookDTO.getStockQuantity());
+        existingBook.setCategory(bookDTO.getCategory());
+        existingBook.setDescription(bookDTO.getDescription());
+        existingBook.setStatus(bookDTO.isStatus());
+        existingBook.setDiscountPercent(bookDTO.getDiscountPercent());
+        // setDiscountPercent sẽ tự động tính discountedPrice
+
+        // Nếu có ảnh mới, xử lý upload và cập nhật
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                // Xoá ảnh cũ
+                if (existingBook.getPublicId() != null && !existingBook.getPublicId().isEmpty()) {
+                    cloudinary.uploader().destroy(existingBook.getPublicId(), ObjectUtils.emptyMap());
+                }
+
+                // Upload ảnh mới
+                var uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
+
+                existingBook.setPublicId(uploadResult.get("public_id").toString());
+                existingBook.setImageUrl(uploadResult.get("url").toString());
+            } catch (IOException e) {
+                throw new RuntimeException("Error handling image file", e);
+            }
+        }
+        return bookRepository.save(existingBook);
+    }
+
+
 }

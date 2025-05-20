@@ -2,18 +2,23 @@ package bookstore.userservice.services.impl;
 
 import bookstore.userservice.dtos.UpdateUserRequest;
 import bookstore.userservice.dtos.UserDTO;
+import bookstore.userservice.dtos.UserReponseDTO;
 import bookstore.userservice.dtos.UserRequest;
+import bookstore.userservice.entities.Address;
 import bookstore.userservice.exceptions.ItemNotFoundException;
 import bookstore.userservice.repositories.UserRepository;
 import bookstore.userservice.entities.User;
 import bookstore.userservice.services.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,10 +58,25 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional
     @Override
-    public List<UserDTO> findAll() {
-        return userRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<UserReponseDTO> findAll(Pageable pageable, String phoneNumber) {
+        Page<User> users;
+
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            users = userRepository.findByPhoneNumberContainingIgnoreCase(phoneNumber, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+
+        return users.map(user -> UserReponseDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .createdAt(user.getCreatedAt())
+                .addresses(user.getAddresses().stream()
+                        .map(Address::getAddress)
+                        .collect(Collectors.toList()))
+                .build());
     }
 
     /**
@@ -93,10 +113,14 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ItemNotFoundException("Cannot find user with id: " + id));
 
         // Check if the email is already used by another user
-        if (userRepository.existsByEmail(updateUserRequest.getEmail()) &&
-                !user.getEmail().equals(updateUserRequest.getEmail())) {
-            throw new IllegalArgumentException("Email is already in use by another user!");
+        String newEmail = updateUserRequest.getEmail();
+
+        if (newEmail != null && !newEmail.isBlank() &&
+                userRepository.existsByEmail(newEmail) &&
+                !Objects.equals(user.getEmail(), newEmail)) {
+            throw new IllegalArgumentException("Email đã được sử dụng!");
         }
+
 
         // Update user fields
         user.setFullName(updateUserRequest.getFullName());

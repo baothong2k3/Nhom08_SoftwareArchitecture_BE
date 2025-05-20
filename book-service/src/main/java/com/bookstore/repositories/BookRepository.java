@@ -19,4 +19,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT DISTINCT b.category FROM Book b")
     List<String> findDistinctCategories();
+
+    Page<Book> findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(String title, String author, Pageable pageable);
+
+    Page<Book> findByCategory(String category, Pageable pageable);
+
 }
