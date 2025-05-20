@@ -1,0 +1,61 @@
+services:
+  eureka-service:
+    build:
+      context: ./eureka_service
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_APPLICATION_NAME=eureka_service
+    networks:
+      - bookstore-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME=api-gateway
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+      - SPRING_DATA_REDIS_HOST=redis
+    networks:
+      - bookstore-network
+    depends_on:
+      eureka-service:
+        condition: service_healthy
+    
+  book-service:
+    build:
+      context: ./book-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - SPRING_APPLICATION_NAME=book-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://host.docker.internal:3306/book-service-bookstore?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=sapassword
+    networks:
+      - bookstore-network
+    depends_on:
+      eureka-service:
+        condition: service_healthy
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - bookstore-network
+
+networks:
+  bookstore-network:
+    driver: bridge
