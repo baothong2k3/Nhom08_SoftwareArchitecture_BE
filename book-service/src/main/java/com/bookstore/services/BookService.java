@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface BookService {
-    Page<BookDTO> getAllBooksPaged(int page, int size);
+    Page<BookDTO> getAllBooksPaged(int page, int size,String keyword);
     public BookDTO getBookById(Long id);
     public Book saveBook(Book book, MultipartFile imageFile);
     public BookDTO partialUpdateBook(Long id, BookDTO bookDTO);
@@ -20,5 +20,6 @@ public interface BookService {
     List<BookDTO> searchBooks(String keyword);
     List<String> getAllCategories();
     Book updateBookInfo(Long id, BookDTO bookDTO, MultipartFile imageFile);
+    Page<BookDTO> getBooksByCategory(String category, int page, int size);
 
 }

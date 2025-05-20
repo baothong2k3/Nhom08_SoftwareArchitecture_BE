@@ -188,6 +188,7 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, Map<String, Object>> bookSales = new HashMap<>();
         for (Order order : orders) {
             for (OrderDetail detail : order.getOrderDetails()) {
+
                 Long bookId = detail.getBookId();
                 bookSales.putIfAbsent(bookId, new HashMap<>());
                 Map<String, Object> bookStat = bookSales.get(bookId);
@@ -293,8 +294,18 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<Order> getPagedOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Page<Order> getPagedOrders(Pageable pageable, OrderStatus status) {
+        if (status != null) {
+            return orderRepository.findByStatus(status, pageable);
+        } else {
+            return orderRepository.findAll(pageable); // đã có sort theo createdAt ở controller
+        }
     }
+
+    @Override
+    public Page<Order> getPagedOrdersByPhone(String phoneNumber, Pageable pageable) {
+        return orderRepository.findByPhoneNumberContaining(phoneNumber, pageable);
+    }
+
 
 }

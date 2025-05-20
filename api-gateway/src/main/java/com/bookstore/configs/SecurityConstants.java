@@ -9,6 +9,7 @@ public class SecurityConstants {
             "/api/auth/forgot-password",
             "/api/books/paged",
             "/api/books/*/check-stock",
+            "/api/books/category",
     };
 
     public static final String[] ADMIN_ONLY_PATHS = { "/user/all" };
@@ -28,6 +29,7 @@ public class SecurityConstants {
             "/api/user/update",
             "/api/user/add-address",
             "/api/orders/*/details",
+            "/api/orders/place",
             "/api/orders/*/cancel",
             "/api/books/*/increase-stock",
             "/api/books/*/update",

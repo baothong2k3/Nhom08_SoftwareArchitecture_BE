@@ -120,12 +120,14 @@ public class UserController {
     @GetMapping("/paged")
     public ResponseEntity<Page<UserReponseDTO>> getPagedUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String phoneNumber) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserReponseDTO> userPage = userService.findAll(pageable);
+        Page<UserReponseDTO> userPage = userService.findAll(pageable, phoneNumber);
         return ResponseEntity.ok(userPage);
     }
+
 
 
 
