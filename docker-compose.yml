@@ -49,6 +49,28 @@ services:
       eureka-service:
         condition: service_healthy
   
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - SPRING_APPLICATION_NAME=auth-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://host.docker.internal:3306/auth-service-bookstore?allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=sapassword
+      - twilio.accountSid=your_account_sid
+      - twilio.authToken=your_auth_token
+      - twilio.serviceId=your_service_id
+      - spring.profiles.active=dev1
+    networks:
+      - bookstore-network
+    depends_on:
+      eureka-service:
+        condition: service_healthy
+
   redis:
     image: redis:alpine
     ports:
