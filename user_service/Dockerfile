@@ -14,7 +14,9 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 
 # Build application
-RUN mvn package -DskipTests
+# Fix the spring-boot-maven-plugin issue by modifying the pom.xml
+RUN sed -i '/<exclude>/,/<\/exclude>/s/<version>1.18.36<\/version>//' pom.xml && \
+    mvn package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
