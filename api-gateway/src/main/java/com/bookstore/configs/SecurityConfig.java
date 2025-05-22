@@ -65,9 +65,13 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Sử dụng setAllowedOrigins thay vì setAllowedOriginPatterns
-        config.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
+//        config.setAllowedOrigins(List.of("https://fe-kien-truc-deploy.vercel.app"));
+        config.setAllowedOrigins(List.of(
+                "https://fe-kien-truc-deploy.vercel.app",
+                "http://127.0.0.1:5500"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With,X-Session-Id"));
         config.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);

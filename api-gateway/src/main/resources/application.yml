@@ -41,7 +41,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/orders/**,/api/statistic/**
         - id: book-service
           uri: lb://book-service
           predicates:
@@ -50,6 +50,10 @@ spring:
           uri: lb://cart-service
           predicates:
             - Path=/api/cart/**
+        - id: gemini-chat
+          uri: lb://gemini-chat
+          predicates:
+              - Path=/api/qna/**
 
 eureka:
   instance:

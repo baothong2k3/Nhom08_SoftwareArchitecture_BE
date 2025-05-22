@@ -15,6 +15,29 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 public class CustomCorsFilter {
+//    @Bean
+//    @Order(Ordered.HIGHEST_PRECEDENCE)
+//    public WebFilter corsFilter() {
+//        return (ServerWebExchange ctx, WebFilterChain chain) -> {
+//            ServerHttpRequest request = ctx.getRequest();
+//            ServerHttpResponse response = ctx.getResponse();
+//
+//            response.getHeaders().add("Access-Control-Allow-Origin", "https://fe-kien-truc-deploy.vercel.app");
+//            response.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+//            response.getHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Origin, X-Requested-With,X-Session-Id");
+//            response.getHeaders().add("Access-Control-Allow-Credentials", "true");
+//            response.getHeaders().add("Access-Control-Max-Age", "3600");
+//
+//            if (request.getMethod() == HttpMethod.OPTIONS) {
+//                response.setStatusCode(HttpStatus.OK);
+//                return Mono.empty();
+//            }
+//
+//            return chain.filter(ctx);
+//        };
+//    }
+
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public WebFilter corsFilter() {
@@ -22,10 +45,17 @@ public class CustomCorsFilter {
             ServerHttpRequest request = ctx.getRequest();
             ServerHttpResponse response = ctx.getResponse();
 
-            response.getHeaders().add("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
+            String origin = request.getHeaders().getOrigin();
+            if (origin != null && (
+                    origin.equals("https://fe-kien-truc-deploy.vercel.app") ||
+                            origin.equals("http://127.0.0.1:5500")
+            )) {
+                response.getHeaders().add("Access-Control-Allow-Origin", origin);
+                response.getHeaders().add("Access-Control-Allow-Credentials", "true");
+            }
+
             response.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-            response.getHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Origin, X-Requested-With");
-            response.getHeaders().add("Access-Control-Allow-Credentials", "true");
+            response.getHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Origin, X-Requested-With,X-Session-Id");
             response.getHeaders().add("Access-Control-Max-Age", "3600");
 
             if (request.getMethod() == HttpMethod.OPTIONS) {
@@ -36,4 +66,5 @@ public class CustomCorsFilter {
             return chain.filter(ctx);
         };
     }
+
 }

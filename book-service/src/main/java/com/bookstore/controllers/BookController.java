@@ -34,10 +34,23 @@ public class BookController {
     @GetMapping("/paged")
     public ResponseEntity<Page<BookDTO>> getAllBooksPaged(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Page<BookDTO> booksPage = bookService.getAllBooksPaged(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+
+        Page<BookDTO> booksPage = bookService.getAllBooksPaged(page, size, keyword);
         return ResponseEntity.ok(booksPage);
     }
+
+    @GetMapping("/category")
+    public ResponseEntity<Page<BookDTO>> getBooksByCategory(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<BookDTO> booksPage = bookService.getBooksByCategory(category, page, size);
+        return ResponseEntity.ok(booksPage);
+    }
+
 
     @GetMapping("/newest")
     public ResponseEntity<List<BookDTO>> getNewestBooks() {

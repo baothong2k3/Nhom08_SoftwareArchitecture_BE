@@ -126,13 +126,20 @@ public class JWTGlobalFilter implements WebFilter {
         String path = exchange.getRequest().getURI().getPath();
         log.info("Processing request for path: {}", path);
 
+        System.out.println("Processing request for path: " + path);
+
         // Sử dụng phương thức isPublicPath để kiểm tra xem đường dẫn có phải là public path không
         if (isPublicPath(path)) {
+            System.out.println("Đường dẫn là public path: " + path);
             return chain.filter(exchange); // Nếu là public path, không cần xác thực
         }
 
         if (path.equals("/api/user/all") || path.equals("/api/orders/paged") || path.equals("/api/books/save") ||
-                path.equals("/api/user/paged")|| path.matches("^/api/orders/\\d+/update-status$")) {
+                path.equals("/api/user/paged")|| path.matches("^/api/orders/\\d+/update-status$")
+                || path.equals("/api/statistic/daily") || path.equals("/api/statistic/monthly")
+                || path.equals("/api/statistic/yearly") || path.equals("/custom")
+                || path.equals("/api/orders/search-by-phone")
+        ) {
             String token = extractJwtFromRequest(exchange);
             Claims claims = extractClaims(token);
             if (claims == null) {

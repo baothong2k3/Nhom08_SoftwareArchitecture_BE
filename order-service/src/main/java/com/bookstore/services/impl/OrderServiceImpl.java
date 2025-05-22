@@ -9,6 +9,9 @@ import com.bookstore.entities.OrderDetail;
 import com.bookstore.entities.OrderStatus;
 import com.bookstore.repositories.OrderRepository;
 import com.bookstore.services.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,20 +50,22 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private InventoryService inventoryService;
+
     @Override
     public String createOrder(Long userId, OrderRequestDTO orderRequestDTO,List<CartRequestDTO> cartRequestDTOList) {
         // 1. Kiểm tra co đủ sách trong kho không
         for (CartRequestDTO item : cartRequestDTOList) {
-            String url = "http://localhost:8080/api/books/" + item.getBookId() + "/check-stock?requestedQuantity=" + item.getQuantity();
-            Boolean isEnough;
             try {
-                isEnough = restTemplate.getForObject(url, Boolean.class);
-            } catch (Exception e) {
-                return "Không thể kết nối đến dịch vụ kiểm tra kho sách (Book Service) cho sách ID " + item.getBookId();
+                Boolean isEnough = inventoryService.checkStock(item.getBookId(), item.getQuantity());
+                if (isEnough == null || !isEnough) {
+                    return "Không đủ sách trong kho cho sách ID " + item.getBookId() + ". Số lượng yêu cầu: " + item.getQuantity();
+                }
+            }catch (Exception e){
+                return "Không thể kiểm tra số lượng tồn kho cho sách ID " + item.getBookId();
             }
-            if (!isEnough) {
-                return "Không đủ sách trong kho cho sách ID " + item.getBookId() + ". Số lượng yêu cầu: " + item.getQuantity();
-            }
+
         }
         // 2. Tạo đối tượng Order
         Order order = Order.builder()
@@ -88,7 +93,7 @@ public class OrderServiceImpl implements OrderService {
 
             String bookServiceUrl = "http://localhost:8080/api/books/" + item.getBookId() + "/update-stock";
             try {
-                restTemplate.patchForObject(bookServiceUrl, item.getQuantity(), Void.class);
+                inventoryService.updateStock(bookServiceUrl, item.getQuantity());
             } catch (Exception e) {
                 return "Không thể cập nhật số lượng tồn cho sách ID " + item.getBookId();
             }
@@ -118,6 +123,8 @@ public class OrderServiceImpl implements OrderService {
             return "Đã xảy ra lỗi khi tạo đơn hàng: " + e.getMessage();
         }
     }
+
+
 
     @Override
     public List<Order> getOrdersByUserId(Long userId) {
@@ -188,6 +195,7 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, Map<String, Object>> bookSales = new HashMap<>();
         for (Order order : orders) {
             for (OrderDetail detail : order.getOrderDetails()) {
+
                 Long bookId = detail.getBookId();
                 bookSales.putIfAbsent(bookId, new HashMap<>());
                 Map<String, Object> bookStat = bookSales.get(bookId);
@@ -293,8 +301,18 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<Order> getPagedOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Page<Order> getPagedOrders(Pageable pageable, OrderStatus status) {
+        if (status != null) {
+            return orderRepository.findByStatus(status, pageable);
+        } else {
+            return orderRepository.findAll(pageable); // đã có sort theo createdAt ở controller
+        }
     }
+
+    @Override
+    public Page<Order> getPagedOrdersByPhone(String phoneNumber, Pageable pageable) {
+        return orderRepository.findByPhoneNumberContaining(phoneNumber, pageable);
+    }
+
 
 }
