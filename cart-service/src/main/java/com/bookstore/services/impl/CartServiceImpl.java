@@ -6,6 +6,7 @@ import com.bookstore.entities.Cart;
 import com.bookstore.repositories.CartRepository;
 import com.bookstore.services.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,9 +23,12 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Value("http://api-gateway:8080/api/books/")
+    private String url;
+
     @Override
     public CartResponseDTO addBookToCart(Long userId, Long bookId) {
-        String bookServiceUrl = "http://localhost:8080/api/books/" + bookId;
+        String bookServiceUrl = url + bookId;
         BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
         if (bookDTO == null || !bookDTO.isStatus()) {
@@ -65,7 +69,7 @@ public class CartServiceImpl implements CartService {
         List<Cart> cartItems = cartRepository.findByUserId(userId);
 
         return cartItems.stream().map(cart -> {
-            String bookServiceUrl = "http://localhost:8003/api/books/" + cart.getBookId();
+            String bookServiceUrl = url + cart.getBookId();
             BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
             if (bookDTO == null) {
@@ -105,7 +109,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUserIdAndBookId(userId, bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found for userId: " + userId + " and bookId: " + bookId));
 
-        String bookServiceUrl = "http://localhost:8003/api/books/" + bookId;
+        String bookServiceUrl = url + bookId;
         BookDTO bookDTO = restTemplate.getForObject(bookServiceUrl, BookDTO.class);
 
         if (bookDTO == null || !bookDTO.isStatus()) {

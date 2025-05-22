@@ -8,6 +8,7 @@ import com.bookstore.entities.OrderStatus;
 import com.bookstore.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,12 @@ public class OrderController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Value("http://api-gateway:8080/api/cart/")
+    private String urlCart;
+
+    @Value("http://api-gateway:8080/api/books/")
+    private String urlBook;
 
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(
@@ -66,7 +73,7 @@ public class OrderController {
                 HttpHeaders headers = new HttpHeaders();
                 headers.set("Authorization", auth);
                 headers.set("UserId", userId.toString());
-                String clearCartUrl = "http://localhost:8080/api/cart/remove-multiple";
+                String clearCartUrl = urlCart + "/remove-multiple";
                 HttpEntity<List<Long>> clearEntity = new HttpEntity<>(cartIds, headers);
                 ResponseEntity<Boolean> cartClearResponse = restTemplate.exchange(
                         clearCartUrl,
@@ -173,7 +180,7 @@ public class OrderController {
                         headers.setContentType(MediaType.APPLICATION_JSON);
                         headers.set("Authorization", auth);
 
-                        String url = "http://localhost:8080/api/books/" + bookId + "/increase-stock";
+                        String url = urlBook + bookId + "/increase-stock";
                         HttpEntity<Integer> request = new HttpEntity<>(quantity, headers);
                         ResponseEntity<Void> bookResponse = restTemplate.exchange(
                                 url,

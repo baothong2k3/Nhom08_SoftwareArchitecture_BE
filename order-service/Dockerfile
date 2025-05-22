@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy pom.xml for dependency resolution
 COPY pom.xml .
 
-# Download dependencies (leveraging Docker cache)
-RUN mvn dependency:go-offline -B
+# Fix the Spring Boot Maven Plugin configuration issue
+RUN sed -i '/<exclude>/,/<\/exclude>/{ s/<version>[^<]*<\/version>//g }' pom.xml
 
 # Copy source code
 COPY src ./src
@@ -25,7 +25,7 @@ WORKDIR /app
 # Copy JAR from build stage
 COPY --from=builder /app/target/order-service-0.0.1-SNAPSHOT.jar app.jar
 
-# Expose order-service port
+# Expose order-service port 8005
 EXPOSE 8005
 
 # Run application

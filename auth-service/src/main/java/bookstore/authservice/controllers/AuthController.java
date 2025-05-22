@@ -6,6 +6,7 @@ import bookstore.authservice.services.OtpService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,9 @@ public class AuthController {
     private final RestTemplate restTemplate;
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
+
+    @Value("http://api-gateway:8080/api/user/")
+    private String urlUser;
 
     @Autowired
     public AuthController(AccountService authService, AuthenticationManager authenticationManager, OtpService otpService) {
@@ -71,7 +75,7 @@ public class AuthController {
 
     private void saveUserInformation(SignUpRequest signUpRequest) {
         try {
-            String saveUserUrl = "http://localhost:8001/api/user/save";
+            String saveUserUrl = urlUser + "/save";
 
 
 

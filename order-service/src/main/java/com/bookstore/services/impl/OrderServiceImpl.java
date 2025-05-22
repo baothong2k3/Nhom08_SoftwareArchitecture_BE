@@ -47,11 +47,14 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Value("http://api-gateway:8080/api/books/")
+    private String urlBook;
+
     @Override
     public String createOrder(Long userId, OrderRequestDTO orderRequestDTO,List<CartRequestDTO> cartRequestDTOList) {
         // 1. Kiểm tra co đủ sách trong kho không
         for (CartRequestDTO item : cartRequestDTOList) {
-            String url = "http://localhost:8080/api/books/" + item.getBookId() + "/check-stock?requestedQuantity=" + item.getQuantity();
+            String url = urlBook + item.getBookId() + "/check-stock?requestedQuantity=" + item.getQuantity();
             Boolean isEnough;
             try {
                 isEnough = restTemplate.getForObject(url, Boolean.class);
@@ -86,7 +89,7 @@ public class OrderServiceImpl implements OrderService {
                     .order(order)
                     .build();
 
-            String bookServiceUrl = "http://localhost:8080/api/books/" + item.getBookId() + "/update-stock";
+            String bookServiceUrl = urlBook + item.getBookId() + "/update-stock";
             try {
                 restTemplate.patchForObject(bookServiceUrl, item.getQuantity(), Void.class);
             } catch (Exception e) {
